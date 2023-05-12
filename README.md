@@ -1,6 +1,10 @@
 # Image-Render Blender Camera
 
+**Check out the `stable` branch for the latest stable version**
+
 Implements Blender addon `anycam` and provides functionality for `image-render` modules.
+
+See the repository `image-render-setup` for more information and documentation on the `image-render` automation system.
 
 ## Purpose of the project
 
