@@ -41,6 +41,8 @@ from pathlib import Path
 from anybase import path as anypath
 from anyblend.mesh.types import CMeshData
 
+from scipy.spatial import KDTree
+
 
 # ########################################################################################################
 # Render crop tuple
@@ -599,12 +601,22 @@ class CCameraLut:
 
         aRayDirsFlat = aRayDirs.reshape(iPixCnt, 3)
 
-        aTestDirsEx = np.expand_dims(aTestDirs, axis=1)
-        aRayDirsFlatEx = np.expand_dims(aRayDirsFlat, axis=0)
+        iTestDirCnt = aTestDirs.shape[0]
+        if iTestDirCnt < 4:
+            # original code: brute force computation of distances to find nearest ray
+            aTestDirsEx = np.expand_dims(aTestDirs, axis=1)
+            aRayDirsFlatEx = np.expand_dims(aRayDirsFlat, axis=0)
 
-        aSub = aRayDirsFlatEx - aTestDirsEx
-        aDist = np.linalg.norm(aSub, axis=2)
-        aMinIdx = np.argmin(aDist, axis=1)
+            aSub = aRayDirsFlatEx - aTestDirsEx
+            aDist = np.linalg.norm(aSub, axis=2)
+            aMinIdx = np.argmin(aDist, axis=1)
+        else:
+            # speed-up if many points need to be projected:
+            # use kd-tree to exclude huge parts of the image from the brute force computation
+            iPixelCnt = aRayDirsFlat.shape[0]
+            xKdTree = KDTree(aRayDirsFlat, leafsize=iPixelCnt // 50)
+            _, aMinIdx = xKdTree.query(aTestDirs)
+        # endif
 
         lPixPosRC: list[list[float]] = []
         lPixValid: list[bool] = []
