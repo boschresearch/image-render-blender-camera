@@ -31,6 +31,7 @@ import bmesh
 
 # import math
 # import mathutils
+import os
 import json
 import numpy as np
 from pathlib import Path
@@ -72,7 +73,6 @@ def Create(
     bCreateFrustum: bool = False,
     dicAnyCamEx: dict = None,
 ):
-
     # Calculate Blender Units per Millimeter
     fBUperMM = fScale * 1e-3 / bpy.context.scene.unit_settings.scale_length
 
@@ -388,9 +388,9 @@ def Create(
 
 # enddef
 
+
 # ###############################################################################
 def GetBlenderLutImage(_sImageName: str, _bDoRaise=True) -> np.ndarray:
-
     bpyImage = bpy.data.images.get(_sImageName)
     if bpyImage is None:
         if _bDoRaise is True:
@@ -418,10 +418,10 @@ def GetBlenderLutImage(_sImageName: str, _bDoRaise=True) -> np.ndarray:
 
 # enddef
 
+
 # ###############################################################################
 # Save Blender Lut Image
 def SaveBlenderLutImage(_xFilePath: Union[str, list, tuple, Path], _sImageName: str, *, _bOverwrite: bool = True):
-
     import os
 
     # need to enable OpenExr explicitly
@@ -461,8 +461,9 @@ def SaveBlenderLutImage(_xFilePath: Union[str, list, tuple, Path], _sImageName: 
 
 # ###############################################################################
 # Store LUT data in dictionary and saving LUT file
-def StoreLutCameraData(*, _dicCamData: dict, _xPath: Union[Path, str], _bOverwrite: bool = True):
-
+def StoreLutCameraData(
+    *, _dicCamData: dict, _xPath: Union[Path, str], _xFromPath: Path = None, _bOverwrite: bool = True
+):
     try:
         dicLutData: dict = _dicCamData["mEx"]["mLutData"]
         sImageName = dicLutData["sImageName"]
@@ -470,11 +471,21 @@ def StoreLutCameraData(*, _dicCamData: dict, _xPath: Union[Path, str], _bOverwri
         raise CAnyError_Message(sMsg=f"Incomplete camera data for LUT camera", xChildEx=xEx)
     # endtry
 
-    sLutFilename = "Camera-LUT.exr"
-    # sLutFilename = f"LUT-{sImageName}.exr"
-    dicLutData["sFilePath"] = sLutFilename
+    pathTrg = Path(_xPath)
 
-    SaveBlenderLutImage((_xPath, sLutFilename), sImageName, _bOverwrite=_bOverwrite)
+    # sLutFilename = "Camera-LUT.exr"
+    sName = sImageName.replace(".", "-")
+    sLutFilename = f"LUT-{sName}.exr"
+
+    pathLutFile = pathTrg / sLutFilename
+
+    if _xFromPath is not None:
+        dicLutData["sFilePath"] = Path(os.path.relpath(pathLutFile.as_posix(), _xFromPath.as_posix())).as_posix()
+    else:
+        dicLutData["sFilePath"] = sLutFilename
+    # endif
+
+    SaveBlenderLutImage(pathLutFile, sImageName, _bOverwrite=_bOverwrite)
 
 
 # enddef

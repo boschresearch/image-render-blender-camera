@@ -55,11 +55,11 @@ class CRenderCrop(NamedTuple):
 
 # endclass
 
+
 # ########################################################################################################
 # The camera LUT class
 class CCameraLut:
     def __init__(self):
-
         # ########################################
         # Member Variables
 
@@ -276,7 +276,6 @@ class CCameraLut:
 
     # ##########################################################################################################
     def LutToImgPixelValue(self, _fLutPix: float) -> float:
-
         return (_fLutPix - self._iLutBorderPixel - (self._iLutSuperSampling / 2.0 - 0.5)) * self._fImgPerLutPix
 
     # enddef
@@ -289,7 +288,6 @@ class CCameraLut:
 
     # ##########################################################################################################
     def ImgToLutPixelValue(self, _fImgPix: float) -> float:
-
         return _fImgPix / self._fImgPerLutPix + self._iLutBorderPixel + (self._iLutSuperSampling / 2.0 - 0.5)
 
     # enddef
@@ -320,8 +318,7 @@ class CCameraLut:
 
         imgLut = cv2.imread(sPathLut, cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH | cv2.IMREAD_UNCHANGED)
         if imgLut is None:
-            print("Error loading image: {0}".format(sPathLut))
-            return None
+            raise RuntimeError("Error loading image: {0}".format(sPathLut))
         # endif
 
         if len(imgLut.shape) != 3 or imgLut.shape[2] < 3:
@@ -355,7 +352,6 @@ class CCameraLut:
         _fLutCenterRow: Optional[float] = None,
         _fLutCenterCol: Optional[float] = None,
     ):
-
         self._iLutBorderPixel = max(0, _iLutBorderPixel)
         self._iLutSuperSampling = max(1, _iLutSuperSampling)
         self._fImgPerLutPix: float = 1.0 / self._iLutSuperSampling
@@ -517,7 +513,6 @@ class CCameraLut:
 
     # ##########################################################################################################
     def GetLutImgPixelRadii(self) -> np.ndarray:
-
         aLutCtr = np.array(self._tImgCtrRC)
 
         aLutIdx = np.argwhere(self._aLutMask[:, :, 0])
@@ -534,7 +529,6 @@ class CCameraLut:
 
     # ##########################################################################################################
     def GetLutAngles_rad(self) -> np.ndarray:
-
         aRadDir = self._imgLut[:, :, 0:2]
         aRadLen = np.linalg.norm(aRadDir, axis=2)
 
@@ -715,7 +709,6 @@ class CCameraLut:
         _fMaxAngle_deg: float,
         _bForce: bool = False,
     ) -> np.ndarray:
-
         assertion.IsTrue(len(_aNewRay.shape) == 1, "Given ray array has invalid shape")
 
         if _bForce is True:
@@ -744,7 +737,6 @@ class CCameraLut:
         _fMaxAngle_deg: float,
         _bForceLast: bool = False,
     ) -> np.ndarray:
-
         assertion.IsTrue(len(_aNewRayList.shape) == 2, "Given ray list has invalid shape")
 
         aPrevRay = _aPrevRay
@@ -772,7 +764,6 @@ class CCameraLut:
     def GetFrustumMesh(
         self, *, _fRayLen: float, _fMaxEdgeAngle_deg: float = 1.0, _fSurfAngleStep_deg: float = 10.0
     ) -> CMeshData:
-
         lVex: list[tuple[float, float, float]] = [(0.0, 0.0, 0.0), (0.0, 0.0, -_fRayLen)]
 
         aRayDir = self._imgLut[:, :, 0:3]
