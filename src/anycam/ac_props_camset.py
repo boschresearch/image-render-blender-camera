@@ -105,9 +105,7 @@ def _SetId(self, _sValue):
         if _sValue != self.loc_sId:
             sValue = _sValue.replace(" ", ".").replace(":", "-")
             lCamSetIds = xAcCamSetList.GetIdList()
-            sValue = ops.ProvideUniqueId(
-                sValue, lCamSetIds, sDefaultBaseName="CameraSet"
-            )
+            sValue = ops.ProvideUniqueId(sValue, lCamSetIds, sDefaultBaseName="CameraSet")
 
             # Rename all frustums of component cameras
             for xCamLoc in self.clCameras:
@@ -144,9 +142,7 @@ def _SelCamSetEl(self, context):
 
             xAcProps.SelectCameraObject(xAcCamera.sAnyCamLabel)
             context.view_layer.objects.active = xAcCamera.objLocation
-            anyblend.object.ParentObject(
-                xAcCamera.objLocation, xAcCamera.objCamera, bKeepTransform=False
-            )
+            anyblend.object.ParentObject(xAcCamera.objLocation, xAcCamera.objCamera, bKeepTransform=False)
         # endif
     # endif
 
@@ -208,9 +204,7 @@ class CPgAcCamSet(bpy.types.PropertyGroup):
     sLabel: bpy.props.StringProperty(default="")
     sToolTip: bpy.props.StringProperty(default="")
 
-    bExportFileExists: bpy.props.BoolProperty(
-        name="Export File Exists", default=False, get=_ExportFileExists
-    )
+    bExportFileExists: bpy.props.BoolProperty(name="Export File Exists", default=False, get=_ExportFileExists)
 
     bExportOverwrite: bpy.props.BoolProperty(name="Export Overwrite", default=False)
 
@@ -231,15 +225,12 @@ class CPgAcCamSet(bpy.types.PropertyGroup):
 
     bShow: bpy.props.BoolProperty(name="Show", default=True, update=_Show)
 
-    bShowFrustum: bpy.props.BoolProperty(
-        name="Show Frustum", default=True, update=_ShowFrustum
-    )
+    bShowFrustum: bpy.props.BoolProperty(name="Show Frustum", default=True, update=_ShowFrustum)
 
-    bShowIntersection: bpy.props.BoolProperty(
-        name="Show Intersection", default=True, update=_ShowIntersection
-    )
+    bShowIntersection: bpy.props.BoolProperty(name="Show Intersection", default=True, update=_ShowIntersection)
 
     bCompactView: bpy.props.BoolProperty(name="Compact View", default=True)
+    bCompactPaths: bpy.props.BoolProperty(name="Compact Paths", default=False)
 
     loc_fFrustumViewScale: bpy.props.FloatProperty()
     fFrustumViewScale: bpy.props.FloatProperty(
@@ -291,9 +282,7 @@ class CPgAcCamSet(bpy.types.PropertyGroup):
 
     def GetExportFilePath(self):
         sFilename = self.sId.replace(".", "_")
-        return os.path.normpath(
-            os.path.join(bpy.path.abspath(self.sPathExport), sFilename + ".json")
-        )
+        return os.path.normpath(os.path.join(bpy.path.abspath(self.sPathExport), sFilename + ".json"))
 
     # enddef
 

@@ -76,9 +76,7 @@ class AC_UL_CameraLocationList(bpy.types.UIList):
         )
 
         sIcon = "RADIOBUT_ON" if item.bShowIntersection else "RADIOBUT_OFF"
-        yCol1_3.prop(
-            item, "bShowIntersection", text="", icon_only=True, icon=sIcon, emboss=False
-        )
+        yCol1_3.prop(item, "bShowIntersection", text="", icon_only=True, icon=sIcon, emboss=False)
 
         if data.bCompactView:
             ySplit2 = yCol2.split()
@@ -164,9 +162,7 @@ class AC_PT_CameraSet(bpy.types.Panel):
             bHasCamera = False
             if bCanCreateCamera:
                 dicSel = ac_func_camset.GetSelectedCameraLocation(self, context)
-                sCamSetElId = xAcCamSet.CreateId(
-                    objCamera=dicSel.get("objCam"), objLocation=dicSel.get("objLoc")
-                )
+                sCamSetElId = xAcCamSet.CreateId(objCamera=dicSel.get("objCam"), objLocation=dicSel.get("objLoc"))
                 bHasCamera = xAcCamSet.HasId(sCamSetElId)
                 bCanCreateCamera = not bHasCamera
             # endif
@@ -279,14 +275,13 @@ class AC_PT_CameraSet(bpy.types.Panel):
                     text="Auto generate paths",
                     emboss=True,
                 )
+                yRow.prop(xAcCamSet, "bCompactPaths", text="Compact")
 
                 yRow = yBox.row()
                 yRow.prop(xAcCamSet, "fFrustumViewScale")
 
                 yRow = yBox.row()
-                yRow.prop(
-                    xAcCamSet, "objIntersect", text="Intersect", icon="OUTLINER_OB_MESH"
-                )
+                yRow.prop(xAcCamSet, "objIntersect", text="Intersect", icon="OUTLINER_OB_MESH")
 
                 yRow = yBox.row()
                 yRow.prop(xAcCamSet, "fFrustumIntersectScale")

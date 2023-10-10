@@ -367,6 +367,7 @@ def AutoGenCathPaths(_xContext):
 
     if xAcCamSetList.bValidSelection:
         xCamSet = xAcCamSetList.Selected
+        sPathSep: str = "-" if xCamSet.bCompactPaths is True else "/"
         lLocNames = xCamSet.GetLocationNames()
         # Find longest common part at beginning of string
         # Only tests blocks separated by a dot
@@ -401,7 +402,7 @@ def AutoGenCathPaths(_xContext):
         for sLocName in lLocNames:
             sName = sLocName[iCommonCnt:]
             lName = [x for x in sName.split(".") if len(x) > 0]
-            lLocPaths.append("/".join(lName))
+            lLocPaths.append(sPathSep.join(lName))
         # endfor
 
         lCamParts = []
@@ -437,11 +438,11 @@ def AutoGenCathPaths(_xContext):
 
         for iIdx, xCamLoc in enumerate(xCamSet.clCameras):
             if bCommonCamName:
-                sCamPath = "{0}/{1}".format(lCamParts[iIdx][0], "/".join(lCamParts[iIdx][2:]))
+                sCamPath = "{0}{2}{1}".format(lCamParts[iIdx][0], sPathSep.join(lCamParts[iIdx][2:]), sPathSep)
             else:
-                sCamPath = "/".join(lCamParts[iIdx])
+                sCamPath = sPathSep.join(lCamParts[iIdx])
             # endif
-            xCamLoc.sCathPath = "{0}/{1}".format(lLocPaths[iIdx], sCamPath)
+            xCamLoc.sCathPath = "{0}{2}{1}".format(lLocPaths[iIdx], sCamPath, sPathSep)
         # endfor
 
     # endif
