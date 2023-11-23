@@ -28,6 +28,8 @@
 
 import bpy
 from anyblend.node import align as nalign
+from anyblend.node.shader import utils as nutils
+
 
 #################################################################
 # Create/Update node groups for refractive media
@@ -35,7 +37,6 @@ from anyblend.node import align as nalign
 # depending on the wavelength stored in the render parameters node group.
 #
 def Update(_dicGlassCatalog):
-
     # Try to get the render parameter node group
     #    xGrpPars = bpy.data.node_groups.get('RenderPars_v01')
     #    if xGrpPars is None:
@@ -98,8 +99,8 @@ def Update(_dicGlassCatalog):
             xGrp = bpy.data.node_groups.new(sName, "ShaderNodeTree")
 
             # Create output node
-            xGrp.outputs.new("NodeSocketFloat", "IOR")
-            xGrp.inputs.new("NodeSocketFloat", "Wavelength")
+            nutils.ProvideNodeTreeOutputSocket(xGrp, "IOR", "NodeSocketFloat")
+            nutils.ProvideNodeTreeOutputSocket(xGrp, "Wavelength", "NodeSocketFloat")
         # endif
 
         # Remove all nodes to ensure proper update

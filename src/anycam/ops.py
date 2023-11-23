@@ -49,10 +49,10 @@ from anybase.cls_anyexcept import CAnyExcept
 c_sOriginName = ".temp.AnyCam.Origin.World"
 c_sWorldMatrixName = ".temp.AnyCam.matrix_world"
 
+
 #################################################################
 # Create a lens system from the given data modules
 def CreateLensSystem(modLensData, modMediaData):
-
     # TODO: Could update or delete function
 
     # Init render parameters
@@ -78,7 +78,6 @@ def CreateLensSystem(modLensData, modMediaData):
 
 #######################################################################################
 def LoadAnyCamData(_objCam, bUpdateObject=True):
-
     if _objCam is None:
         raise Exception("Empty camera object given")
     # endif
@@ -118,7 +117,6 @@ def LoadAnyCamData(_objCam, bUpdateObject=True):
 #######################################################################################
 # Get list of AnyCam objects of given type
 def GetCameraObjects():
-
     lObjList = []
 
     for xObj in bpy.data.objects:
@@ -137,7 +135,6 @@ def GetCameraObjects():
 #######################################################################################
 # Get the anycam data of the camera with the given id
 def GetAnyCam(_xContext, _sCamId, bRaiseException=True):
-
     objCam = bpy.data.objects.get(_sCamId)
     if objCam is None:
         if bRaiseException:
@@ -158,7 +155,6 @@ def GetAnyCam(_xContext, _sCamId, bRaiseException=True):
 #######################################################################################
 # Get camera type from DTI of AnyCam object data block
 def GetAnyCamType(_dicCam):
-
     dicCamType = config.SplitDti(_dicCam.get("sDTI"))
     lCamType = dicCamType.get("lType")
     sType = lCamType[2]
@@ -180,7 +176,6 @@ def GetAnyCamType(_dicCam):
 #######################################################################################
 # Get type of anycam
 def GetAnyCamTypeFromId(_xContext, _sCamId, bRaiseException=True):
-
     dicRes = GetAnyCam(_xContext, _sCamId, bRaiseException=bRaiseException)
     if dicRes is None:
         return None
@@ -195,7 +190,6 @@ def GetAnyCamTypeFromId(_xContext, _sCamId, bRaiseException=True):
 
 ############################################################################################
 def ParentAnyCam(*, sCamId, sParentId=None):
-
     dicObj = bpy.data.objects
 
     objCam = dicObj.get(sCamId)
@@ -231,7 +225,6 @@ def ParentAnyCam(*, sCamId, sParentId=None):
 #######################################################################################
 # Set an AnyCam Object Property
 def SetAnyCamProp(_xContext, _sCamId, _sPropId, _xValue):
-
     dicObj = GetAnyCam(_xContext, _sCamId)
     dicAnyCam = dicObj.get("dicAnyCam")
     dicAnyCam[_sPropId] = _xValue
@@ -262,7 +255,6 @@ def SetAnyCamSenResY(_xContext, _sCamId, _iValue):
 ######################################################
 # Get list of names of children of Object
 def GetObjectChildrenNames(objMain, Recursive=False):
-
     lNames = []
     for objChild in objMain.children:
         lNames.append(objChild.name)
@@ -280,7 +272,6 @@ def GetObjectChildrenNames(objMain, Recursive=False):
 ######################################################
 # Enable/disable render for object hierarchy
 def EnableObjectHierarchy(*, objMain, bRender=None, bView=None, bViewport=None, sRegExIgnore=None):
-
     lNames = [objMain.name]
     lNames += GetObjectChildrenNames(objMain, Recursive=True)
 
@@ -313,7 +304,6 @@ def EnableObjectHierarchy(*, objMain, bRender=None, bView=None, bViewport=None, 
 ######################################################
 # Store the various hide states of an object
 def StoreObjectHierarchyEnableStates(*, objMain, sRegExIgnore=None):
-
     lNames = [objMain.name]
     lNames += GetObjectChildrenNames(objMain, Recursive=True)
 
@@ -339,7 +329,6 @@ def StoreObjectHierarchyEnableStates(*, objMain, sRegExIgnore=None):
 ######################################################
 # Load previously stored hide states of an object
 def LoadObjectHierarchyEnableStates(*, objMain, sRegExIgnore=None):
-
     lNames = [objMain.name]
     lNames += GetObjectChildrenNames(objMain, Recursive=True)
 
@@ -375,7 +364,6 @@ def LoadObjectHierarchyEnableStates(*, objMain, sRegExIgnore=None):
 ######################################################
 # Delete object hierarchy
 def DeleteObjectHierarchy(objMain):
-
     # bpy.ops.object.select_all(action='DESELECT')
 
     lNames = [objMain.name]
@@ -407,7 +395,6 @@ def DeleteObjectHierarchy(objMain):
 ######################################################
 # Delete Collection Hierarchy
 def DeleteCollectionHierarchy(_cnMain):
-
     for objX in _cnMain.objects:
         bpy.data.objects.remove(objX)
     # endfor
@@ -421,7 +408,6 @@ def DeleteCollectionHierarchy(_cnMain):
 ##################################################################
 # Preprocess package data for use in libs
 def PreparePkgData(_sDataType, _dicData, _dicSrcPkg):
-
     if _sDataType == "media":
         dicMedia = _dicData.get("mMedia")
         for sMedia in dicMedia:
@@ -452,7 +438,6 @@ def IsCameraDbPackage(_sPath, _sFile):
 ##################################################################
 # Function to load all camera modules in a user specified path
 def LoadDataPkg(_sMainPkgPath):
-
     # Get all subfolders of the user provided path, that contain a file '__init__.py'.
     # These are the packages we are interested in.
     sMainPkgPath = _sMainPkgPath
@@ -477,7 +462,6 @@ def LoadDataPkg(_sMainPkgPath):
 
     # Check if any packages were found
     if len(lPackageNames) > 0:
-
         for sPkgName in lPackageNames:
             sPkgPath = os.path.normpath(os.path.join(sMainPkgPath, sPkgName))
             dicPkg = config.Load((sPkgPath, "package.json"), sDTI="/package/anycam/camera-db:1.*")
@@ -529,7 +513,6 @@ def LoadDataPkg(_sMainPkgPath):
 #######################################################################################
 # Get camera type from DTI of AnyCam DB data block
 def GetAnyCamDbType(_dicCam):
-
     dicCamType = config.SplitDti(_dicCam.get("sDTI"))
     lCamType = dicCamType.get("lType")
     iCamTypeCnt = len(lCamType)
@@ -585,7 +568,6 @@ def GetAnyCamDbType(_dicCam):
 
 #######################################################################################
 def AddAnyCamDb(_dicAnyCamDb: dict, *, _xContext: bpy.types.Context = None):
-
     xCtx: bpy.types.Context = None
     if _xContext is not None:
         xCtx = _xContext
@@ -625,7 +607,6 @@ def AddAnyCamDb(_dicAnyCamDb: dict, *, _xContext: bpy.types.Context = None):
 #######################################################################################
 # Combine all Media databases into one
 def CombineMediaDbs(_dicMediaPkgs):
-
     dicMediaDb = {}
 
     for sId in _dicMediaPkgs:
@@ -640,7 +621,6 @@ def CombineMediaDbs(_dicMediaPkgs):
 
 #######################################################################################
 def CreateFullCameraName(_sUserName, _sCamId, *, _dicAnyCamDb: dict):
-
     dicCamList = _dicAnyCamDb.get("camera")
     if dicCamList is None:
         raise RuntimeError("AnCam database does not contain camera dictionary")
@@ -683,7 +663,6 @@ def CreateFullCameraName(_sUserName, _sCamId, *, _dicAnyCamDb: dict):
 #######################################################################################
 # Create a camera from database data
 def CreateCameraFromDb(_sName, _sCamId, _bOverwrite, fScale=1.0, *, _dicAnyCamDb: dict = None):
-
     if _dicAnyCamDb is None:
         dicAnyCamDb = ac_global.dicAnyCamDb
     else:
@@ -759,7 +738,6 @@ def CreateCameraFromDb(_sName, _sCamId, _bOverwrite, fScale=1.0, *, _dicAnyCamDb
 #######################################################################################
 # Create Lft Camera
 def CreateCameraLftFromDb(_sName, _dicCam, _bOverwrite, dicAnyCamEx=None, fScale=1.0, *, _dicAnyCamDb: dict):
-
     sSensorId = _dicCam.get("sSensorId")
     sLensSystemId = _dicCam.get("sLensSystemId", _dicCam.get("sProjectId"))
 
@@ -814,7 +792,6 @@ def CreateCameraLftFromDb(_sName, _dicCam, _bOverwrite, dicAnyCamEx=None, fScale
 #######################################################################################
 # Create LUT Camera
 def CreateCameraLutFromDb(_sName, _dicCam, _bOverwrite, dicAnyCamEx=None, fScale=1.0, *, _dicAnyCamDb: dict):
-
     # sSensorId = _dicCam.get("sSensorId")
     sProjectId = _dicCam.get("sProjectId")
 
@@ -861,7 +838,6 @@ def CreateCameraLutFromDb(_sName, _dicCam, _bOverwrite, dicAnyCamEx=None, fScale
 #######################################################################################
 # Create Pinhole Camera
 def CreateCameraPinholeFromDb(_sName, _dicCam, _bOverwrite, dicAnyCamEx=None, fScale=1.0, *, _dicAnyCamDb: dict):
-
     sSensorId = _dicCam.get("sSensorId")
     sPinholeId = _dicCam.get("sPinholeId", _dicCam.get("sProjectId"))
 
@@ -907,7 +883,6 @@ def CreateCameraPinholeFromDb(_sName, _dicCam, _bOverwrite, dicAnyCamEx=None, fS
 #######################################################################################
 # Create Generalized Pinhole Camera
 def CreateCameraPinGenFromDb(_sName, _dicCam, _bOverwrite, dicAnyCamEx=None, fScale=1.0, *, _dicAnyCamDb: dict):
-
     sSensorId = _dicCam.get("sSensorId")
     sProjectId = _dicCam.get("sProjectId")
 
@@ -954,7 +929,6 @@ def CreateCameraPinGenFromDb(_sName, _dicCam, _bOverwrite, dicAnyCamEx=None, fSc
 #######################################################################################
 # Create Pano Camera
 def CreateCameraPanoFromDb(_sName, _dicCam, _bOverwrite, dicAnyCamEx=None, fScale=1.0, *, _dicAnyCamDb: dict):
-
     sSensorId = _dicCam.get("sSensorId")
     sPanoId = _dicCam.get("sPanoId", _dicCam.get("sProjectId"))
 
@@ -1000,7 +974,6 @@ def CreateCameraPanoFromDb(_sName, _dicCam, _bOverwrite, dicAnyCamEx=None, fScal
 #######################################################################################
 # Create Pano Camera
 def CreateCameraPolyFromDb(_sName, _dicCam, _bOverwrite, dicAnyCamEx=None, fScale=1.0, *, _dicAnyCamDb: dict):
-
     sSensorId = _dicCam.get("sSensorId")
     sPolyId = _dicCam.get("sPolyId", _dicCam.get("sProjectId"))
 
@@ -1045,7 +1018,6 @@ def CreateCameraPolyFromDb(_sName, _dicCam, _bOverwrite, dicAnyCamEx=None, fScal
 #################################################################
 # Create a LFT camera
 def CreateCameraLft(_sName, _dicCamera, bOverwrite=False, bForce=False, fScale=1.0, dicAnyCamEx=None):
-
     sCamName = "{0}.{1}".format(_sName, _dicCamera["sName"].replace(" ", "_"))
     return obj.camera_lft.Create(
         sCamName,
@@ -1063,7 +1035,6 @@ def CreateCameraLft(_sName, _dicCamera, bOverwrite=False, bForce=False, fScale=1
 #################################################################
 # Create a lut camera
 def CreateCameraLut(_sName, _dicCamera, bOverwrite=False, fScale=1.0, dicAnyCamEx=None):
-
     sCamName = "{0}.{1}".format(_sName, _dicCamera["sName"].replace(" ", "_"))
     return obj.camera_lut.Create(
         sCamName,
@@ -1081,7 +1052,6 @@ def CreateCameraLut(_sName, _dicCamera, bOverwrite=False, fScale=1.0, dicAnyCamE
 #################################################################
 # Create a pinhole camera
 def CreateCameraPinhole(_sName, _dicCamera, bOverwrite=False, fScale=1.0, dicAnyCamEx=None):
-
     sCamName = "{0}.{1}".format(_sName, _dicCamera["sName"].replace(" ", "_"))
     return obj.camera_pinhole.Create(
         sCamName,
@@ -1099,7 +1069,6 @@ def CreateCameraPinhole(_sName, _dicCamera, bOverwrite=False, fScale=1.0, dicAny
 #################################################################
 # Create a pinhole camera
 def CreateCameraPinholeGeneralized(_sName, _dicCamera, bOverwrite=False, fScale=1.0, dicAnyCamEx=None):
-
     sCamName = "{0}.{1}".format(_sName, _dicCamera["sName"].replace(" ", "_"))
     return obj.camera_pin_gen.Create(
         sCamName,
@@ -1117,7 +1086,6 @@ def CreateCameraPinholeGeneralized(_sName, _dicCamera, bOverwrite=False, fScale=
 #################################################################
 # Create a pano camera
 def CreateCameraPano(_sName, _dicCamera, bOverwrite=False, fScale=1.0, dicAnyCamEx=None):
-
     sCamName = "{0}.{1}".format(_sName, _dicCamera["sName"].replace(" ", "_"))
     return obj.camera_pano.Create(
         sCamName,
@@ -1137,7 +1105,6 @@ def CreateCameraPano(_sName, _dicCamera, bOverwrite=False, fScale=1.0, dicAnyCam
 
 
 def CreateCameraPoly(_sName, _dicCamera, bOverwrite=False, fScale=1.0, dicAnyCamEx=None):
-
     sCamName = "{0}.{1}".format(_sName, _dicCamera["sName"].replace(" ", "_"))
     return obj.camera_poly.Create(
         sCamName,
@@ -1176,7 +1143,6 @@ def GetBlenderPars(_xCtx, _dicParDef):
 
 #######################################################################################
 def SetBlenderPars(_xCtx, _dicParDef, _dicValues):
-
     for sPar in _dicParDef:
         if sPar == "_values_":
             lNames = _dicParDef[sPar]
@@ -1202,7 +1168,6 @@ def SetBlenderPars(_xCtx, _dicParDef, _dicValues):
 #######################################################################################
 # Apply render parameters of camera
 def ApplyCameraRenderPars(_xContext, _sCamId, bOptionalApply=True):
-
     objCam = bpy.data.objects.get(_sCamId, None)
     if objCam is None:
         raise Exception("Camera '{0}' not found.".format(_sCamId))
@@ -1233,9 +1198,9 @@ def ApplyCameraRenderPars(_xContext, _sCamId, bOptionalApply=True):
 
 # enddef
 
+
 #######################################################################################
 def GetAnyCamView(_xContext: bpy.types.Context, _sCamId: str, *, _bAddExtrinsics: bool = False):
-
     dicCam: dict = GetAnyCam(_xContext, _sCamId)
     dicAnyCam: dict = dicCam.get("dicAnyCam")
 
@@ -1253,9 +1218,9 @@ def GetAnyCamView(_xContext: bpy.types.Context, _sCamId: str, *, _bAddExtrinsics
 
 # enddef
 
+
 #######################################################################################
 def GetAnyCamHorizFov_deg(_objCam, _dicAnyCam):
-
     # Try to get horizontal FoV for camera
     fFovHoriz_deg = None
     lFov_deg = _dicAnyCam.get("lFov_deg")
@@ -1278,7 +1243,6 @@ def GetAnyCamHorizFov_deg(_objCam, _dicAnyCam):
 
 #######################################################################################
 def GetAnyCamFov_deg(_objCam, _dicAnyCam):
-
     # Try to get horizontal FoV for camera
     lFov_deg = _dicAnyCam.get("lFov_deg")
     if lFov_deg is None or not isinstance(lFov_deg, list) or len(lFov_deg) != 2 or lFov_deg[0] == 0 or lFov_deg[1] == 0:
@@ -1298,7 +1262,6 @@ def GetAnyCamFov_deg(_objCam, _dicAnyCam):
 
 #######################################################################################
 def GetCameraHorizFov_deg(_xContext, _sCamId):
-
     dicCam = GetAnyCam(_xContext, _sCamId)
     objCam = dicCam.get("objCam")
     dicAnyCam = dicCam.get("dicAnyCam")
@@ -1318,7 +1281,6 @@ def ActivateCamera(
     bApplyRenderPars=True,
     bDisableAllOther=True,
 ):
-
     scMain = _xContext.scene
     dicCam = GetAnyCam(_xContext, _sCamId)
     objCam = dicCam.get("objCam")
@@ -1451,6 +1413,39 @@ def ActivateCamera(
         # endfor
     # endfor
 
+    # Loop over all modifiers and check their input fields
+    for objX in bpy.data.objects:
+        for modX in objX.modifiers:
+            if not hasattr(modX, "node_group"):
+                continue
+            # endif
+            ngX = modX.node_group
+            if hasattr(ngX, "inputs"):
+                for inX in ngX.inputs:
+                    if inX.name == "AnyCam.Active.Origin":
+                        modX[inX.identifier] = objCam
+                    elif fFovHoriz_deg is not None and inX.name == "AnyCam.Active.hFoV":
+                        modX[inX.identifier] = float(fFovHoriz_deg)
+                    # endif
+                # endfor inputs
+            elif hasattr(ngX, "interface"):
+                for itemX in ngX.interface.items_tree:
+                    if itemX.in_out != "INPUT":
+                        continue
+                    # endif
+
+                    if itemX.name == "AnyCam.Active.Origin":
+                        modX[itemX.identifier] = objCam
+                    elif fFovHoriz_deg is not None and itemX.name == "AnyCam.Active.hFoV":
+                        modX[itemX.identifier] = float(fFovHoriz_deg)
+                    # endif
+                # endfor items
+            else:
+                raise RuntimeError("Unsupported node group interface. Maybe incompatible Blender version.")
+            # endif
+        # endfor modifiers
+    # endfor objects
+
 
 # enddef
 
@@ -1458,7 +1453,6 @@ def ActivateCamera(
 #######################################################################################
 # Activate selected camera
 def WriteCameraAnyCamData(_xContext, _sCamId, _sFilePath):
-
     dicAnyCam = GetAnyCam(_xContext, _sCamId).get("dicAnyCam")
 
     file.SaveJson(_sFilePath, dicAnyCam)
@@ -1470,7 +1464,6 @@ def WriteCameraAnyCamData(_xContext, _sCamId, _sFilePath):
 #######################################################################################
 # Find the next unique id given a basename and a starting index
 def FindUniqueId(_sBaseName, _iStartIdx, _lIdList):
-
     iIdx = _iStartIdx
     while True:
         sId = "{0}.{1:03d}".format(_sBaseName, iIdx)
@@ -1489,7 +1482,6 @@ def FindUniqueId(_sBaseName, _iStartIdx, _lIdList):
 #######################################################################################
 # Ensure that the given name is unique in list, if not create a new one
 def ProvideUniqueId(_sId, _lIdList, sDefaultBaseName="Element"):
-
     if _sId is None:
         sId = FindUniqueId(sDefaultBaseName, 0, _lIdList)
     else:
@@ -1524,7 +1516,6 @@ def UpdateItemToolTip(_xItem):
 #######################################################################################
 # Update AnyCam camera object list
 def CamObjUpdate(_clCamObj):
-
     lObjList = GetCameraObjects()
 
     _clCamObj.clear()
@@ -1568,7 +1559,6 @@ def CamObjUpdate(_clCamObj):
 
 #######################################################################################
 def _TransformObjectsWorldMatrix(*, xObjects, matX):
-
     global c_sWorldMatrixName
 
     for objX in xObjects:
@@ -1577,7 +1567,6 @@ def _TransformObjectsWorldMatrix(*, xObjects, matX):
             and all((x.type != "FOLLOW_PATH" for x in objX.constraints))
             and objX.get("AnyVehicle") is None
         ):
-
             objX[c_sWorldMatrixName] = [[col for col in row] for row in objX.matrix_world]
             objX.matrix_world = matX @ objX.matrix_world
         # endif
@@ -1605,7 +1594,6 @@ def _RestoreObjectsWorldMatrix(*, xObjects):
 
 #######################################################################################
 def _SetRotationShader(*, ngMain, sLabel, tAngles):
-
     iRotNodeCnt = 0
 
     ndRot = next((x for x in ngMain if x.label == sLabel), None)
@@ -1629,7 +1617,6 @@ def _SetRotationShader(*, ngMain, sLabel, tAngles):
 
 #######################################################################################
 def _SetWorldShaderRotation(*, xContext, tAngles):
-
     sRotNodeLabel = "AnyCam.World.Rotate"
     ngWorld = xContext.scene.world.node_tree.nodes
 
@@ -1647,7 +1634,6 @@ def _SetWorldShaderRotation(*, xContext, tAngles):
 
 #######################################################################################
 def TransformSceneToCameraFrame(*, xContext):
-
     global c_sOriginName
     # Try to revert any previous transformation before applying a new one
     RevertTransformSceneToCameraFrame(xContext=xContext, bDoThrow=False)
@@ -1678,9 +1664,9 @@ def TransformSceneToCameraFrame(*, xContext):
 
 # enddef
 
+
 #######################################################################################
 def GetTransformCameraFrame() -> list:
-
     global c_sOriginName
     # assume that there is at most one camera object with
     # the original world coordinate system as a property.
@@ -1705,7 +1691,6 @@ def GetTransformCameraFrame() -> list:
 
 #######################################################################################
 def RevertTransformSceneToCameraFrame(*, xContext, bDoThrow=True):
-
     global c_sOriginName
     # assume that there is at most one camera object with
     # the original world coordinate system as a property.

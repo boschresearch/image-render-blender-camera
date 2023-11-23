@@ -180,8 +180,13 @@ def Create(
     # fFocLen_mm = lFocLenXY_pix[0] * fPixSize_mm
 
     camX.type = "PANO"
-    camX.cycles.panorama_type = "FISHEYE_EQUIDISTANT"
-    camX.cycles.fisheye_fov = xCamLut.fRenderFoV_rad
+    if hasattr(camX, "cycles"):
+        camX.cycles.panorama_type = "FISHEYE_EQUIDISTANT"
+        camX.cycles.fisheye_fov = xCamLut.fRenderFoV_rad
+    else:
+        camX.panorama_type = "FISHEYE_EQUIDISTANT"
+        camX.fisheye_fov = xCamLut.fRenderFoV_rad
+    # endif
     camX.shift_x = xCamLut.tCamShiftXY[0]
     camX.shift_y = xCamLut.tCamShiftXY[1]
 

@@ -72,7 +72,6 @@ def Create(
     bCreateFrustum=False,
     dicAnyCamEx=None,
 ):
-
     # Calculate Blender Units per Millimeter
     fBUperMM = fScale * 1e-3 / bpy.context.scene.unit_settings.scale_length
 
@@ -168,8 +167,13 @@ def Create(
             bEnsureSquarePixel=bEnsureSquarePixel,
         )
 
-        camX.cycles.panorama_type = "FISHEYE_EQUIDISTANT"
-        camX.cycles.fisheye_fov = math.radians(xView.fFovMax_deg)
+        if hasattr(camX, "cycles"):
+            camX.cycles.panorama_type = "FISHEYE_EQUIDISTANT"
+            camX.cycles.fisheye_fov = math.radians(xView.fFovMax_deg)
+        else:
+            camX.panorama_type = "FISHEYE_EQUIDISTANT"
+            camX.fisheye_fov = math.radians(xView.fFovMax_deg)
+        # endif
 
         # this value has no effect on the rendering, only on the way
         # Blender displays the camera
@@ -197,11 +201,19 @@ def Create(
             bEnsureSquarePixel=bEnsureSquarePixel,
         )
 
-        camX.cycles.panorama_type = "EQUIRECTANGULAR"
-        camX.cycles.longitude_min = math.radians(xView.lFovRange_deg[0][0])
-        camX.cycles.longitude_max = math.radians(xView.lFovRange_deg[0][1])
-        camX.cycles.latitude_min = math.radians(xView.lFovRange_deg[1][0])
-        camX.cycles.latitude_max = math.radians(xView.lFovRange_deg[1][1])
+        if hasattr(camX, "cycles"):
+            camX.cycles.panorama_type = "EQUIRECTANGULAR"
+            camX.cycles.longitude_min = math.radians(xView.lFovRange_deg[0][0])
+            camX.cycles.longitude_max = math.radians(xView.lFovRange_deg[0][1])
+            camX.cycles.latitude_min = math.radians(xView.lFovRange_deg[1][0])
+            camX.cycles.latitude_max = math.radians(xView.lFovRange_deg[1][1])
+        else:
+            camX.panorama_type = "EQUIRECTANGULAR"
+            camX.longitude_min = math.radians(xView.lFovRange_deg[0][0])
+            camX.longitude_max = math.radians(xView.lFovRange_deg[0][1])
+            camX.latitude_min = math.radians(xView.lFovRange_deg[1][0])
+            camX.latitude_max = math.radians(xView.lFovRange_deg[1][1])
+        # endif
 
         # this value has no effect on the rendering, only on the way
         # Blender displays the camera
@@ -277,32 +289,44 @@ def Create(
             )
         # endif
 
-        camX.cycles.panorama_type = "FISHEYE_LENS_POLYNOMIAL"
-
         tShift = xView.GetPrinciplePointShift()
-        camX.cycles.fisheye_fov = math.radians(xView.fFovMax_deg)
-
         # this value has no effect on the rendering, only on the way
         # Blender displays the camera
         camX.lens = xView.fSenSizeMax_mm / 2.0
 
         lPolyCoef_rad_mm = xView.lPolyCoef_rad_mm
-        # For some reason need to negate the coefficients for Blender.
-        # Otherwise the image is upside-down.
-        # HOWEVER, with the negated components the optical flow ground truth
-        # does not work. So, we do NOT negate the components here
-        # but rotate the camera by 180° about the optical axis.
-        # camX.cycles.fisheye_polynomial_k0 = lPolyCoef_rad_mm[0]
-        # camX.cycles.fisheye_polynomial_k1 = lPolyCoef_rad_mm[1]
-        # camX.cycles.fisheye_polynomial_k2 = lPolyCoef_rad_mm[2]
-        # camX.cycles.fisheye_polynomial_k3 = lPolyCoef_rad_mm[3]
-        # camX.cycles.fisheye_polynomial_k4 = lPolyCoef_rad_mm[4]
 
-        camX.cycles.fisheye_polynomial_k0 = -lPolyCoef_rad_mm[0]
-        camX.cycles.fisheye_polynomial_k1 = -lPolyCoef_rad_mm[1]
-        camX.cycles.fisheye_polynomial_k2 = -lPolyCoef_rad_mm[2]
-        camX.cycles.fisheye_polynomial_k3 = -lPolyCoef_rad_mm[3]
-        camX.cycles.fisheye_polynomial_k4 = -lPolyCoef_rad_mm[4]
+        if hasattr(camX, "cycles"):
+            camX.cycles.panorama_type = "FISHEYE_LENS_POLYNOMIAL"
+            camX.cycles.fisheye_fov = math.radians(xView.fFovMax_deg)
+            # For some reason need to negate the coefficients for Blender.
+            # Otherwise the image is upside-down.
+            # HOWEVER, with the negated components the optical flow ground truth
+            # does not work. So, we do NOT negate the components here
+            # but rotate the camera by 180° about the optical axis.
+            # camX.cycles.fisheye_polynomial_k0 = lPolyCoef_rad_mm[0]
+            # camX.cycles.fisheye_polynomial_k1 = lPolyCoef_rad_mm[1]
+            # camX.cycles.fisheye_polynomial_k2 = lPolyCoef_rad_mm[2]
+            # camX.cycles.fisheye_polynomial_k3 = lPolyCoef_rad_mm[3]
+            # camX.cycles.fisheye_polynomial_k4 = lPolyCoef_rad_mm[4]
+
+            camX.cycles.fisheye_polynomial_k0 = -lPolyCoef_rad_mm[0]
+            camX.cycles.fisheye_polynomial_k1 = -lPolyCoef_rad_mm[1]
+            camX.cycles.fisheye_polynomial_k2 = -lPolyCoef_rad_mm[2]
+            camX.cycles.fisheye_polynomial_k3 = -lPolyCoef_rad_mm[3]
+            camX.cycles.fisheye_polynomial_k4 = -lPolyCoef_rad_mm[4]
+
+        else:
+            camX.panorama_type = "FISHEYE_LENS_POLYNOMIAL"
+            camX.fisheye_fov = math.radians(xView.fFovMax_deg)
+
+            camX.fisheye_polynomial_k0 = -lPolyCoef_rad_mm[0]
+            camX.fisheye_polynomial_k1 = -lPolyCoef_rad_mm[1]
+            camX.fisheye_polynomial_k2 = -lPolyCoef_rad_mm[2]
+            camX.fisheye_polynomial_k3 = -lPolyCoef_rad_mm[3]
+            camX.fisheye_polynomial_k4 = -lPolyCoef_rad_mm[4]
+
+        # endif
 
         # Turn camera upside-down
         # objCam.rotation_euler = (0.0, 0.0, math.radians(180.0))
@@ -336,7 +360,6 @@ def Create(
     # Create Frustum Object and Mesh
     if bCreateFrustum:
         if sPanoType == "equidist" or sPanoType == "equirect":
-
             objFS = solids.CreateFrustumPanoFovRange(
                 sName="Frustum.Pano.S." + _sName,
                 lFovRange_deg=xView.lFovRange_deg,
@@ -362,7 +385,6 @@ def Create(
             anyblend.object.Hide(objFL, bHide=True, bHideInAllViewports=True, bHideRender=True)
 
         elif sPanoType == "poly":
-
             xMeshFrustum: CMeshData = xView.GetFrustumMesh(
                 _fRayLen=1.0, _fMaxEdgeAngle_deg=1.0, _fSurfAngleStep_deg=10.0
             )
@@ -455,7 +477,6 @@ def Create(
 
 # ###################################################################################################
 def _CreatePanoPolyView(*, _dicSensor: dict, _dicProject: dict):
-
     xView = CCameraViewPanoPoly()
 
     if config.IsConfigType(_dicProject, "/anycam/db/project/pano/poly:1.0"):
