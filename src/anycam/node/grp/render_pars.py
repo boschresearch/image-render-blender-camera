@@ -27,7 +27,46 @@
 ###
 
 import bpy
+from dataclasses import dataclass
+
 from anyblend.node import align as nalign
+from anyblend.node.shader import utils as nutils
+
+from anyblend.node.shader.utils import CNodeSocketCollection, CNodeSocketInfo
+
+
+# Inputs
+@dataclass(frozen=True)
+class CInputs(CNodeSocketCollection):
+    pass
+
+
+# endclass
+
+
+# Outputs
+@dataclass(frozen=True)
+class COutputs(CNodeSocketCollection):
+    xWavelength: CNodeSocketInfo = CNodeSocketInfo(sName="Wavelength", typSocket=bpy.types.NodeSocketFloat, xValue=520)
+    xBuPerMm: CNodeSocketInfo = CNodeSocketInfo(sName="BU_per_MM", typSocket=bpy.types.NodeSocketFloat, xValue=1.0)
+
+
+# endclass
+
+
+def GetInputs() -> CInputs:
+    return CInputs()
+
+
+# enddef
+
+
+def GetOutputs() -> COutputs:
+    return COutputs()
+
+
+# enddef
+
 
 ################################################################
 # Create global parameter node group
@@ -63,29 +102,25 @@ def Create(bForce=False, iWavelength=None, fScale=None):
             ngPars.nodes.remove(nod)
         # endfor
 
+        xOut = GetOutputs()
+        nutils.ProvideNodeTreeOutputs(ngPars, xOut)
+
         nodOut = ngPars.nodes.new("NodeGroupOutput")
         nodOut.location = (300, 0)
-        if ngPars.outputs.get("Wavelength") is None:
-            ngPars.outputs.new("NodeSocketFloat", "Wavelength")
-        # endif
-
-        if ngPars.outputs.get("BU_per_MM") is None:
-            ngPars.outputs.new("NodeSocketFloat", "BU_per_MM")
-        # endif
 
         nodPar1 = ngPars.nodes.new("ShaderNodeValue")
         nalign.SetNodePosToLeftOf(nodOut, nodPar1, tNodeSpace)
         nodPar1.label = "Wavelength"
         nodPar1.name = "Wavelength"
         nodPar1.outputs[0].default_value = 520
-        ngPars.links.new(nodPar1.outputs[0], nodOut.inputs["Wavelength"])
+        ngPars.links.new(nodPar1.outputs[0], nodOut.inputs[xOut.xWavelength.sName])
 
         nodPar2 = ngPars.nodes.new("ShaderNodeValue")
         nalign.SetNodePosToBelowOf(nodPar1, nodPar2, tNodeSpace)
         nodPar2.label = "BU_per_MM"
         nodPar2.name = "BU_per_MM"
         nodPar2.outputs[0].default_value = 1e-3 / bpy.context.scene.unit_settings.scale_length
-        ngPars.links.new(nodPar2.outputs[0], nodOut.inputs["BU_per_MM"])
+        ngPars.links.new(nodPar2.outputs[0], nodOut.inputs[xOut.xBuPerMm.sName])
     # endif
 
     # Update Values if given
@@ -109,7 +144,6 @@ def Create(bForce=False, iWavelength=None, fScale=None):
 
 
 def SetValues(iWavelength=None, fScale=None):
-
     # Try to get render parameter node group
     ngPars = bpy.data.node_groups.get("AnyCam.RenderPars_v01")
     if ngPars is None:
@@ -137,7 +171,6 @@ def SetValues(iWavelength=None, fScale=None):
 
 
 def GetWavelength():
-
     # Try to get render parameter node group
     ngPars = bpy.data.node_groups.get("AnyCam.RenderPars_v01")
     if ngPars is None:
@@ -150,10 +183,10 @@ def GetWavelength():
 
 # enddef
 
+
 ################################################################
 # Set Wavelength
 def SetWavelength(iWavelength):
-
     # Try to get render parameter node group
     ngPars = bpy.data.node_groups.get("AnyCam.RenderPars_v01")
     if ngPars is None:

@@ -32,6 +32,7 @@
 import bpy
 from anyblend.node import align as nalign
 from anyblend.node import shader as nsh
+from anyblend.node.shader import utils as nutils
 
 ##########################################################
 
@@ -55,12 +56,14 @@ def Create(bForce=False):
     if bUpdate is True:
         # Output pasted from Node Tree Source Plugin
         # INPUTS
-        ngMain.inputs.new("NodeSocketFloat", "radius")
-        ngMain.inputs.new("NodeSocketFloat", "Vignetting Coef 1")
-        ngMain.inputs.new("NodeSocketFloat", "Vignetting Coef 2")
-        ngMain.inputs.new("NodeSocketFloat", "Vignetting Coef 3")
+        nutils.ProvideNodeTreeInputSocket(ngMain, "radius", "NodeSocketFloat", 1.0)
+        nutils.ProvideNodeTreeInputSocket(ngMain, "Vignetting Coef 1", "NodeSocketFloat", 0.0)
+        nutils.ProvideNodeTreeInputSocket(ngMain, "Vignetting Coef 2", "NodeSocketFloat", 0.0)
+        nutils.ProvideNodeTreeInputSocket(ngMain, "Vignetting Coef 3", "NodeSocketFloat", 0.0)
+
         # OUTPUTS
-        ngMain.outputs.new("NodeSocketFloat", "Value")
+        nutils.ProvideNodeTreeOutputSocket(ngMain, "Value", "NodeSocketFloat")
+
         # NODES
         group_input_2 = ngMain.nodes.new("NodeGroupInput")
         if hasattr(group_input_2, "active_preview"):

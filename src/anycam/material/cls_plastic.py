@@ -34,6 +34,7 @@ from anyblend.node import align as nalign
 from anyblend.node import shader as nsh
 from anyblend.node.grp import input as ngInput
 
+
 #####################################################################
 # @staticmethod
 def CreateName(sId):
@@ -41,6 +42,7 @@ def CreateName(sId):
 
 
 # enddef
+
 
 #####################################################################
 # Plastic material class
@@ -56,12 +58,18 @@ class CPlastic(CMaterial):
 
     #####################################################################
     def _Create(self, sName="", bForce=False):
-
         tNodeSpace = (50, 25)
 
         self._nodPrince = self.GetNode("Principled BSDF")
         xP = self._nodPrince.inputs
-        xP["Subsurface"].default_value = 0.98
+        if "Subsurface" in xP:
+            xP["Subsurface"].default_value = 0.98
+        elif "Subsurface Weight" in xP:
+            xP["Subsurface Weight"].default_value = 0.98
+        else:
+            raise RuntimeError("Cannot find 'Subsurface' parameter of 'Principled BSDF'")
+        # endif
+
         xP["Roughness"].default_value = 0.15
 
         lInputs = [["Color", "NodeSocketColor", (1.0, 1.0, 1.0, 1.0)]]
@@ -73,7 +81,9 @@ class CPlastic(CMaterial):
 
         nalign.Relative(self._nodPrince, (0, 0), nodColIn, (1, 0), tNodeSpace)
         self.CreateLink(xOut=nodColIn.outputs[0], xIn=self._nodPrince.inputs["Base Color"])
-        self.CreateLink(xOut=nodColIn.outputs[0], xIn=self._nodPrince.inputs["Subsurface Color"])
+        if "Subsurface Color" in self._nodPrince.inputs:
+            self.CreateLink(xOut=nodColIn.outputs[0], xIn=self._nodPrince.inputs["Subsurface Color"])
+        # endif
         self._bNeedUpdate = False
 
     # enddef
