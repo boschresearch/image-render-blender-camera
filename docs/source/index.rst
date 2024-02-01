@@ -31,9 +31,10 @@ Blender Camera Add-On
    special-camera-render
    technical
    license
+   back-to-main
 
 
-`main <../../html/index.html>`__
+.. `main <../../html/index.html>`__
 
 
 .. Indices and tables
