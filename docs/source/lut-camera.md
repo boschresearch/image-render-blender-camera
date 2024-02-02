@@ -12,17 +12,17 @@ It is also imperative that you consider the following points, before using a LUT
 You absolutely **must** use the render setting `bTransformSceneToCameraFrame`, which is set in the render settings configuration. For example,
 ```json
 {
-    sDTI: "/catharsys/blender/render/output-list:1",
-	sId: "${filebasename}",
+    "sDTI": "/catharsys/blender/render/output-list:1",
+	"sId": "${filebasename}",
 
-	lSettings: [
+	"lSettings": [
         {
-            sDTI: "/catharsys/blender/render/settings/main:1",
-            bTransformSceneToCameraFrame: true,
+            "sDTI": "/catharsys/blender/render/settings/main:1",
+            "bTransformSceneToCameraFrame": true,
         },
     ],
 
-    lOutputs: [...]
+    "lOutputs": [...]
 }
 ```
 See `image-render-workspace-test/config/anycam/test-01/render/image_v1.json5` for a full example.
