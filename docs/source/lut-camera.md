@@ -22,7 +22,7 @@ You absolutely **must** use the render setting `bTransformSceneToCameraFrame`, w
         },
     ],
 
-    "lOutputs": [...]
+    "lOutputs": [] // define outputs
 }
 ```
 See `image-render-workspace-test/config/anycam/test-01/render/image_v1.json5` for a full example.
@@ -48,15 +48,15 @@ The LUT image has to be generated to the following specifications:
 A LUT projection config has for example the following form:
 ```json
 {
-    sDTI: "/anycam/db/project/lut/std:1.0",
+    "sDTI": "/anycam/db/project/lut/std:1.0",
 
-    sId: "$filebasename",
+    "sId": "$filebasename",
 
-	sLutFile: "fisheye-200deg-v1.exr",   
-    iLutBorderPixel: 1,
-    iLutSuperSampling: 1,
-    fLutCenterRow: 500.5,
-    fLutCenterCol: 500.0,
+	"sLutFile": "fisheye-200deg-v1.exr",   
+    "iLutBorderPixel": 1,
+    "iLutSuperSampling": 1,
+    "fLutCenterRow": 500.5,
+    "fLutCenterCol": 500.0,
 }
 ```
 If the parameter `sLutFile` contains a relative path to an `.exr` file, it is assumed to be relative to the project config JSON file. 
@@ -69,12 +69,12 @@ You can approximate a LUT camera with a native Blender polynomial fisheye camera
 
 ```json
 {
-    sDTI: "/anycam/db/project/pano/poly:1.0",
-    sId: "${filebasename}",
+    "sDTI": "/anycam/db/project/pano/poly:1.0",
+    "sId": "${filebasename}",
 
     // relative path to lut config, from which 
     // polynomial is estimated.
-    sLutConfigFile: "../lut/test-fisheye-200deg-v1",
+    "sLutConfigFile": "../lut/test-fisheye-200deg-v1",
 
     // You can optionally set the maximal viewing FoV explicitly.
     // fFovMax_deg: 100.0,
