@@ -59,7 +59,9 @@ def CreatePyramid(_sName, _fSizeX, _fSizeY, _fSizeZ, fOffX=0.0, fOffY=0.0):
 
     meshF.from_pydata(lVex, [], lFaces)
     meshF.update(calc_edges=True)
-    meshF.use_auto_smooth = True
+    if hasattr(meshF, "use_auto_smooth"):
+        meshF.use_auto_smooth = True
+    # endif
 
     bm = bmesh.new()
     bm.from_mesh(meshF)
@@ -177,7 +179,9 @@ def CreateFrustumPanoEquidist(*, sName, fSenSizeX_mm, fSenSizeY_mm, fFov_deg, iR
 
     meshF.from_pydata(lVex, [], lFaces)
     meshF.update(calc_edges=True)
-    meshF.use_auto_smooth = True
+    if hasattr(meshF, "use_auto_smooth"):
+        meshF.use_auto_smooth = True
+    # endif
 
     bm = bmesh.new()
     bm.from_mesh(meshF)
@@ -290,7 +294,9 @@ def CreateFrustumPanoFovRange(*, sName, lFovRange_deg, fFovMax_deg, iResolution,
 
     meshF.from_pydata(lVex, [], lFaces)
     meshF.update(calc_edges=True)
-    meshF.use_auto_smooth = True
+    if hasattr(meshF, "use_auto_smooth"):
+        meshF.use_auto_smooth = True
+    # endif
 
     bm = bmesh.new()
     bm.from_mesh(meshF)
