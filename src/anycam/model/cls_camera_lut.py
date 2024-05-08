@@ -673,20 +673,53 @@ class CCameraLut:
 
                 # print(f"aDelta, aX, fXlen: {aDelta}, {aX}, {fXlen}")
                 # print(f"aDelta, aY, fYlen: {aDelta}, {aY}, {fYlen}")
-
-                fDeltaPixX = np.dot(aDelta, aX) / (fXlen * fXlen)
-                fDeltaPixY = np.dot(aDelta, aY) / (fYlen * fYlen)
+                if fXlen == 0:
+                    fDeltaPixX = 0
+                else:
+                    fDeltaPixX = np.dot(aDelta, aX) / (fXlen * fXlen)
+                if fYlen == 0:
+                    fDeltaPixY = 0
+                else:
+                    fDeltaPixY = np.dot(aDelta, aY) / (fYlen * fYlen)
                 # #####################################################
 
                 lPosRC = [float(iRowIdx + fDeltaPixY), float(iColIdx + fDeltaPixX)]
                 lPosRC = list(self.LutToImgPixel(lPosRC))
 
                 bValid: bool = (
-                    lPosRC[0] >= -0.5
-                    and lPosRC[0] <= iRowCnt + 0.5
-                    and lPosRC[1] >= -0.5
-                    and lPosRC[1] <= iColCnt + 0.5
+                    lPosRC[0] * self._iLutSuperSampling + self._iLutBorderPixel
+                    >= -0.5 * (1 / self._iLutSuperSampling)
+                    and lPosRC[0] * self._iLutSuperSampling + self._iLutBorderPixel
+                    <= iRowCnt
+                    and lPosRC[1] * self._iLutSuperSampling + self._iLutBorderPixel
+                    >= -0.5 * (1 / self._iLutSuperSampling)
+                    and lPosRC[1] * self._iLutSuperSampling + self._iLutBorderPixel
+                    <= iColCnt
                 )
+
+                if bValid:
+                    lPosRCRay = self._imgLut[
+                        max(
+                            0,
+                            int(
+                                np.floor(
+                                    lPosRC[0] * self._iLutSuperSampling
+                                    + self._iLutBorderPixel
+                                )
+                            ),
+                        ),
+                        max(
+                            0,
+                            int(
+                                np.floor(
+                                    lPosRC[1] * self._iLutSuperSampling
+                                    + self._iLutBorderPixel
+                                )
+                            ),
+                        ),
+                    ]
+                    if lPosRCRay[0] == 0 and lPosRCRay[1] == 0 and lPosRCRay[2] == 0:
+                        bValid = False
 
                 break
             # endwhile dummy
