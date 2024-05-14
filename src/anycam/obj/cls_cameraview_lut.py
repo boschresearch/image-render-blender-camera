@@ -153,6 +153,16 @@ class CCameraViewLut(CCameraView):
         # Flip row-column to x-y order
         aPixPosXY = aPixPosRC[:, ::-1]
 
+        # Filter out pixels outside the imager
+        lPixelValid = [
+            v
+            & (p[0] < self._lPixCnt[0])
+            & (p[1] < self._lPixCnt[1])
+            & (p[0] > 0)
+            & (p[1] > 0)
+            for p, v in zip(aPixPosXY, lPixelValid)
+        ]
+
         if _bDetailedFlags is True:
             return aPixPosXY.tolist(), lPixelValid, lPixelValid
         else:
