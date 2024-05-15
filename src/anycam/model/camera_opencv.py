@@ -313,7 +313,13 @@ def undistort(_aRays, _fK1, _fK2, _fK3):
 
 ######################################################################################################
 def create_lookup(
-    _tSensorSizeXY, _tFocLenXY, _tImgCtrXY, _tDistRad, _bBlenderFormat=True
+    _tSensorSizeXY,
+    _tFocLenXY,
+    _tImgCtrXY,
+    _tDistRad,
+    _iLutSupersampling=1,
+    _iLutBorderPixel=1,
+    _bBlenderFormat=True,
 ):
     """Creates a projection rays mask for a pair of camera  _tIntrinsics and sensor size.
 
@@ -322,26 +328,65 @@ def create_lookup(
         _tFocLenXY (array_like): Focal length (fx, fy). Expected shape (2,).
         _tImgCtrXY (array_like): Principal point (ppx, ppy). Expected shape (2,).
         _tDistRad (array_like):  Radial distortion parameters (k1, k2, k3). Expected shape (n,) where n in [0, 3].
+        _iLutSupersampling (int): Supersampling parameter, positive integer, defaults to 1 (no supersampling)
+        _iLutBorderPixel (int): Number of border pixels (or number of border "subpixels" in case fo supersampling), defaults to 1 (minimum allowed)
         _bBlenderFormat (bool, optional): Whether to transform rays to blender CS. Defaults to True.
 
     Returns:
         numpy.ndarray: projection rays for each image pixel. Shape is (H, W, 3).
         If _bBlenderFormat is set to False, the shape is (3, WxH).
     """
+    # The supersampling parameter must be a strictly posivite integer.
+    if not _iLutSupersampling > 0 and isinstance(_iLutSupersampling, int):
+        raise ValueError(
+            f"_iLutSupersampling should be a strictly positive integer but {_iLutSupersampling} was given."
+        )
+
+    # The number of border pixels must be a strictly posivite integer.
+    if not _iLutBorderPixel > 0 and isinstance(_iLutBorderPixel, int):
+        raise ValueError(
+            f"_iLutBorderPixel should be a strictly positive integer but {_iLutBorderPixel} was given."
+        )
 
     # Only flip z-axis for Blender, as y-axis is flipped implicitly,
     # when using numpy array as Blender generated image.
     aRot_x_180 = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, -1.0]])
 
+    # The y axis is pointing downwards. Adjust the vertical centre accordingly.
+    _tImgCtrXY_opencv = [_tImgCtrXY[0], _tSensorSizeXY[1] - _tImgCtrXY[1]]
+
+    # Determine the size of the LUT based on the imager size, the supersampling, and the two border pixels
+    iLutSizeV = _iLutSupersampling * _tSensorSizeXY[1] + 2 * _iLutBorderPixel
+    iLutSizeH = _iLutSupersampling * _tSensorSizeXY[0] + 2 * _iLutBorderPixel
+    fStep = 1 / _iLutSupersampling
+
     # get image coordinates of each pixel. Use pixel center point for ray
     # formation.
-    aV = np.arange(0, _tSensorSizeXY[1], 1) + 0.5  # vertical image direction
-    aU = np.arange(0, _tSensorSizeXY[0], 1) + 0.5  # horizontal image direction
+    # vertical image direction:
+    aV = np.arange(0, _tSensorSizeXY[1], fStep) + 0.5 * fStep
+    aV = np.hstack(
+        (
+            np.arange(aV[0] - _iLutBorderPixel, aV[0], 1),
+            aV,
+            np.arange(aV[-1], aV[-1] + _iLutBorderPixel, 1),
+        )
+    )
+
+    # horizontal image direction
+    aU = np.arange(0, _tSensorSizeXY[0], fStep) + 0.5 * fStep
+    aU = np.hstack(
+        (
+            np.arange(aU[0] - _iLutBorderPixel, aU[0], 1),
+            aU,
+            np.arange(aU[-1], aU[-1] + _iLutBorderPixel, 1),
+        )
+    )
+
     aU_grid, aV_grid = np.meshgrid(aU, aV)
     aUv = np.array([np.ravel(aU_grid), np.ravel(aV_grid)])
 
     # get viewing rays of each pixel
-    aRays = inverse_opencv_radial(aUv, _tFocLenXY, _tImgCtrXY, _tDistRad)
+    aRays = inverse_opencv_radial(aUv, _tFocLenXY, _tImgCtrXY_opencv, _tDistRad)
 
     # Legacy return for verification purposes
     if not _bBlenderFormat:
@@ -352,9 +397,7 @@ def create_lookup(
     # endif
 
     # Transform rays to blender's camera CS. Shape [H, W, 3].
-    aRays_reshaped = np.moveaxis(
-        np.reshape(aRays, (3, _tSensorSizeXY[1], _tSensorSizeXY[0])), 0, 2
-    )
+    aRays_reshaped = np.moveaxis(np.reshape(aRays, (3, iLutSizeV, iLutSizeH)), 0, 2)
 
     aRays_blender_cs = np.squeeze(aRot_x_180 @ np.expand_dims(aRays_reshaped, -1))
 
@@ -362,8 +405,8 @@ def create_lookup(
     aNorm[aNorm == 0] = 1
     aRays_normalized = aRays_blender_cs / np.expand_dims(aNorm, -1)
 
-    iImgCtrX = int(_tImgCtrXY[0])
-    iImgCtrY = int(_tImgCtrXY[1])
+    iImgCtrX = int(_tImgCtrXY_opencv[0])
+    iImgCtrY = int(_tImgCtrXY_opencv[1])
 
     aRayLeft = aRays_normalized[iImgCtrY, 0, :]
     aRayRight = aRays_normalized[iImgCtrY, _tSensorSizeXY[0] - 1, :]
@@ -397,8 +440,11 @@ def verify_inverse_model():
 
     tSensor_Size = (1936, 1216)  # (width, height)
     tFocLenXY = (1500.0, 1500.0)
-    tImgCtrXY = (968.0, 608.0)
+    tImgCtrXY = (988.0, 620.0)
     tDistRad = (-0.7, -0.2, -0.2)
+    iSupersampling = 1
+    fStep = 1 / iSupersampling
+    iLutBorderPixel = 1
 
     aRays = create_lookup(
         tSensor_Size, tFocLenXY, tImgCtrXY, tDistRad, _bBlenderFormat=False
@@ -406,11 +452,34 @@ def verify_inverse_model():
 
     aMask_invalid = aRays[2, :] == 0
     aUv_backprojected = opencv_radial(
-        aRays[:, ~aMask_invalid], tFocLenXY, tImgCtrXY, tDistRad
+        aRays[:, ~aMask_invalid],
+        tFocLenXY,
+        (tImgCtrXY[0], tSensor_Size[1] - tImgCtrXY[1]),
+        tDistRad,
     )
 
-    aV = np.arange(0, tSensor_Size[1], 1) + 0.5  # vertical image direction
-    aU = np.arange(0, tSensor_Size[0], 1) + 0.5  # horizontal image direction
+    step = 1
+    # get image coordinates of each pixel. Use pixel center point for ray
+    # formation.
+    # vertical image direction:
+    aV = np.arange(0, tSensor_Size[1], fStep) + 0.5 * fStep
+    aV = np.hstack(
+        (
+            np.arange(aV[0] - iLutBorderPixel, aV[0], 1),
+            aV,
+            np.arange(aV[-1], aV[-1] + iLutBorderPixel, 1),
+        )
+    )
+
+    # horizontal image direction
+    aU = np.arange(0, tSensor_Size[0], fStep) + 0.5 * fStep
+    aU = np.hstack(
+        (
+            np.arange(aU[0] - iLutBorderPixel, aU[0], 1),
+            aU,
+            np.arange(aU[-1], aU[-1] + iLutBorderPixel, 1),
+        )
+    )
     aU_grid, aV_grid = np.meshgrid(aU, aV)
     aUv_original = np.array([np.ravel(aU_grid), np.ravel(aV_grid)])
 
