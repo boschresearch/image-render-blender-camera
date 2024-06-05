@@ -1633,7 +1633,7 @@ def _SetWorldShaderRotation(*, xContext, tAngles):
 
 
 #######################################################################################
-def TransformSceneToCameraFrame(*, xContext):
+def TransformSceneToCameraFrame(*, xContext: bpy.context):
     global c_sOriginName
     # Try to revert any previous transformation before applying a new one
     RevertTransformSceneToCameraFrame(xContext=xContext, bDoThrow=False)
@@ -1645,7 +1645,7 @@ def TransformSceneToCameraFrame(*, xContext):
 
     matCamInv = matCam.inverted()
 
-    _TransformObjectsWorldMatrix(xObjects=xContext.view_layer.objects, matX=matCamInv)
+    _TransformObjectsWorldMatrix(xObjects=xContext.scene.objects, matX=matCamInv)
 
     eulX = objCam.matrix_world.to_euler()
     tAngles = (eulX.x, eulX.y, eulX.z)
@@ -1657,7 +1657,10 @@ def TransformSceneToCameraFrame(*, xContext):
     xContext.scene.frame_set(iFrameCur + 1)
     xContext.scene.frame_set(iFrameCur)
 
-    xContext.view_layer.update()
+    layer: bpy.types.ViewLayer
+    for layer in xContext.scene.view_layers:
+        layer.update()
+    # endfor
 
     return True
 
