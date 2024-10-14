@@ -26,6 +26,7 @@
 # </LICENSE>
 ###
 
+import anyblend.ops_image
 import bpy
 import bmesh
 
@@ -215,7 +216,7 @@ def Create(
 
     iLutPixCntY, iLutPixCntX = xCamLut.tLutPixCntRC
 
-    imgA = bpy.data.images.new(sImgName, iLutPixCntX, iLutPixCntY, alpha=True, float_buffer=True, is_data=True)
+    imgA: bpy.types.Image = bpy.data.images.new(sImgName, iLutPixCntX, iLutPixCntY, alpha=True, float_buffer=True, is_data=True)
     sImgName = imgA.name
     # bpy.ops.image.new(name=sImgName, width=iImgW, height=iImgH)
     # imgA = bpy.data.images[sImgName]
@@ -228,7 +229,7 @@ def Create(
     imgA.pixels = list(xCamLut.imgLutFlipped.flatten())
 
     # Pack image in Blender file
-    bpy.ops.image.pack({"edit_image": imgA})
+    anyblend.ops_image.Pack(imgA)
 
     # Create a texture that uses the image to ensure that the image is not deleted by Blender
     sTexName = sCamName + ".RayDir.Tex"

@@ -26,6 +26,7 @@
 # </LICENSE>
 ###
 
+import anyblend.ops_image
 import bpy
 import bmesh
 import math
@@ -284,7 +285,7 @@ def Create(
     imgA.pixels = list(aRayImg.flatten())
 
     # Pack image in Blender file
-    bpy.ops.image.pack({"edit_image": imgA})
+    anyblend.ops_image.Pack(imgA)
 
     # Create a texture that uses the image to ensure that the image is not deleted by Blender
     sTexName = sCamName + ".RayDir.Tex"
