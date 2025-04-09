@@ -87,9 +87,8 @@ def LoadAnyCamData(_objCam, bUpdateObject=True):
     # endif
 
     sAnyCam = _objCam.get("AnyCam")
-
     if sAnyCam is None:
-        sAnyCam = json.dumps({"sDTI": "/anycam/camera/std:1.0", "iSenResX": 1920, "iSenResY": 1080})
+        sAnyCam = json.dumps({"sDTI": "/anycam/camera/std:1.0", "iSenResX": bpy.context.scene.render.resolution_x, "iSenResY": bpy.context.scene.render.resolution_y})
         if bUpdateObject:
             _objCam["AnyCam"] = sAnyCam
         # endif
