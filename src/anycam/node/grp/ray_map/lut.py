@@ -34,6 +34,7 @@ from anyblend.node import shader as nsh
 
 from anyblend.node.grp import polynomial as modGrpPoly
 from anyblend.node.grp import ray_to_dir_v2 as modGrpRayToDir
+from anyblend.node.shader import tex
 
 from . import incident_ray_ex2 as modGrpIncidentRay
 from .. import poly_vignetting as modGrpVignetting
@@ -221,7 +222,7 @@ def Create(
             "LUT",
             ngIncidentRay.outputs["UV Coord"],
             sImgLut,
-            sExtension="EXTEND",
+            eExtension=tex.EExtension.EXTEND
         )
         nalign.Relative(ngIncidentRay, (1, 1), skTexImg, (0, 0), tNodeSpace)
 

@@ -35,12 +35,15 @@ import json
 import numpy as np
 
 from . import util
+from . camera_lut import CreateCameraLut
 
 from .. import ops
 from .. import node
 from .. import material
 from .. import model
 from ..mesh import solids
+from ..model.cls_camera_lut import CCameraLut
+
 import anyblend
 from anybase.cls_anyexcept import CAnyExcept
 
@@ -158,7 +161,16 @@ def Create(
         fFac *= fFac2
     # endfor
 
-    dicLut = model.camera_opencv.create_lookup((iPixCntX, iPixCntY), lFocLenXY_pix, lImgCtrXY_pix, lDistRad_pix)
+    dicLut = model.camera_opencv.create_lookup(
+        (iPixCntX, iPixCntY), 
+        lFocLenXY_pix, 
+        lImgCtrXY_pix, 
+        lDistRad_pix,
+        _iLutSupersampling=1, 
+        _iLutBorderPixel=1,
+        _bBlenderFormat=True,
+    )
+
     if dicLut is None:
         return {
             "bResult": False,
@@ -170,232 +182,251 @@ def Create(
     lFov_deg = dicLut["lFov_deg"]
     lFovRange_deg = dicLut["lFovRange_deg"]
 
-    #####################################################
-    # Create camera empty, that acts as origin for whole camera system
-
-    # Create the name for the camera
-    sCamName = CreateName(_sName)
-
-    # get or create anycam collection where all cameras are placed
-    cnMain = bpy.data.collections.get("AnyCam")
-    if cnMain is None:
-        cnMain = bpy.data.collections.new("AnyCam")
-        bpy.context.scene.collection.children.link(cnMain)
-    # endif
-
-    objCamOrig = bpy.data.objects.get(sCamName)
-    if objCamOrig is not None:
-        if bOverwrite is True:
-            ops.DeleteObjectHierarchy(objCamOrig)
-            objCamOrig = None
-        else:
-            return {
-                "bResult": False,
-                "objCam": objCamOrig,
-                "sMsg": "Camera with selected name already exists.",
-            }
-        # endif
-    # endif
-
-    #####################################################
-    # Create Parameter node groups
-    node.grp.render_pars.Create(bForce=bForce, fScale=fScale)
-    node.grp.sensor_pars.Create(dicSensor, bForce=bForce)
-    #####################################################
-
-    objCamOrig = bpy.data.objects.new(sCamName, None)
-    objCamOrig.location = (0, 0, 0)
-    objCamOrig.empty_display_size = 1
-    objCamOrig.empty_display_type = "PLAIN_AXES"
-    cnMain.objects.link(objCamOrig)
-
-    #####################################################
-    # Create render pinhole camera
-    sSenName = sCamName + ".Sen"
-
-    camX = bpy.data.cameras.get(sSenName)
-    if camX is not None:
-        bpy.data.cameras.remove(camX)
-        camX = None
-    # endif
-
-    camX = bpy.data.cameras.new(sSenName)
-    objCam = bpy.data.objects.new(name=sSenName, object_data=camX)
-
-    # cnMain = bpy.context.scene.collection
-    vlMain = bpy.context.view_layer
-    cnMain.objects.link(objCam)
-    vlMain.objects.active = objCam
-    objCam.select_set(True)
-
-    # Specify camera parameters
-
-    fPixSize_mm = 1e-3 * fPixSize_um
-    fSenSizeX_mm = fPixSize_mm * iPixCntX
-    fSenSizeY_mm = fPixSize_mm * iPixCntY
-    # fSenSizeMax_mm = max(fSenSizeX_mm, fSenSizeY_mm)
-    # fFocLen_mm = fSenSizeMax_mm
-    fFocLen_mm = lFocLenXY_pix[0] * fPixSize_mm
-
-    camX.type = "PERSP"
-    camX.lens = fFocLen_mm
-    camX.lens_unit = "MILLIMETERS"
-    # camX.ortho_scale = fBUperMM * fSenSizeMax_mm
-    camX.sensor_width = fSenSizeX_mm
-    camX.sensor_height = fSenSizeY_mm
-
-    if fSenSizeX_mm >= fSenSizeY_mm:
-        camX.sensor_fit = "HORIZONTAL"
-    else:
-        camX.sensor_fit = "VERTICAL"
-    # endif
-
-    camX.shift_x = 0.0
-    camX.shift_y = 0.0
-
-    camX.clip_start = fBUperMM * 0.5 * fFocLen_mm
-    camX.clip_end = fBUperMM * 1e7
-    camX.display_size = max(0.5, fBUperMM * fFocLen_mm)
-
-    # Sensor position relative to camera origin, which is
-    # on last glass surface towards environment.
-    objCam.location = (0, 0, fFocLen_mm * fBUperMM)
-    objCam.rotation_euler = (0, 0, 0)
-
-    ##############################################################
-    # Creating LUT image object
-    sImgName = sCamName + ".RayDir"
-    imgA = bpy.data.images.get(sImgName)
-    if imgA is not None:
-        bpy.data.images.remove(imgA)
-    # endif
-    imgA = bpy.data.images.new(sImgName, iPixCntX, iPixCntY, alpha=True, float_buffer=True, is_data=True)
-    sImgName = imgA.name
-    # bpy.ops.image.new(name=sImgName, width=iImgW, height=iImgH)
-    # imgA = bpy.data.images[sImgName]
-    imgA.use_fake_user = True
-
-    # add a fourth color channel to store data as Blender image
-    aRayImg = np.c_[aRayNorm, np.ones((iPixCntY, iPixCntX, 1))]
-
-    # print("LUT pixel count: {}".format(aRayImg.size))
-    # print("image pixel count: {}".format(len(imgA.pixels)))
-
-    # Copy the actual pixels into the Blender image
-    imgA.pixels = list(aRayImg.flatten())
-
-    # Pack image in Blender file
-    anyblend.ops_image.Pack(imgA)
-
-    # Create a texture that uses the image to ensure that the image is not deleted by Blender
-    sTexName = sCamName + ".RayDir.Tex"
-    texA = bpy.data.textures.get(sTexName)
-    if texA is not None:
-        bpy.data.textures.remove(texA)
-    # endif
-    texA = bpy.data.textures.new(sTexName, type="IMAGE")
-    texA.image = imgA
-    texA.use_fake_user = True
-
-    #####################################################
-    # Create plane with refractor that acts as sensor plane
-    sRefractorName = sSenName + ".RF"
-
-    objRF = bpy.data.objects.get(sRefractorName)
-    if objRF is not None:
-        bpy.data.objects.remove(objRF)
-    # endif
-
-    meshRF = bpy.data.meshes.get(sRefractorName)
-    if meshRF is not None:
-        bpy.data.meshes.remove(meshRF)
-    # endif
-
-    meshRF = bpy.data.meshes.new(sRefractorName)
-    objRF = bpy.data.objects.new(name=sRefractorName, object_data=meshRF)
-    cnMain.objects.link(objRF)
-
-    # objRF.location = (-lCenter_mm[0], -lCenter_mm[1], 0)
-    objRF.location = (0, 0, 0)
-
-    try:
-        # Get Refractor Material
-        matRF, ngLut = material.ray_lut.Create(
-            sId=sCamName,
-            sImgLut=imgA.name,
-            lSenSizeXY_pix=[iPixCntX, iPixCntY],
-            fPixSize_mm=fPixSize_mm,
-            lCenter_mm=[0.0, 0.0],
-            fVignettingNormRadius_mm=fVigNorm,
-            lVignettingCoef=lVigCoef,
-            bForce=True,
-        )
-    except Exception as xEx:
-        return {
-            "bResult": False,
-            "objCam": objCamOrig,
-            "sMsg": "Exception creating LUT material:\n{}".format(str(xEx)),
-        }
-    # endtry
-
-    objRF.data.materials.append(matRF)
-
-    xBMesh = bmesh.new()
-
-    # Create Plane with Ray Splitter material
-    fW2 = (math.ceil(fSenSizeX_mm * 10.0) / 20.0 + 0.1) * fBUperMM
-    fH2 = (math.ceil(fSenSizeY_mm * 10.0) / 20.0 + 0.1) * fBUperMM
-    fZ = 0.0
-
-    # tNorm = (0, 0, 1)
-    v1 = xBMesh.verts.new((-fW2, -fH2, fZ))
-    v2 = xBMesh.verts.new((fW2, -fH2, fZ))
-    v3 = xBMesh.verts.new((fW2, fH2, fZ))
-    v4 = xBMesh.verts.new((-fW2, fH2, fZ))
-    xBMesh.faces.new((v1, v2, v3, v4))
-
-    xBMesh.to_mesh(meshRF)
-    xBMesh.free()
-
-    #############################################################
-    # Store AnyCam Data
-    if dicAnyCamEx is None:
-        dicAnyCamEx = {}
-    # endif
-
-    dicAnyCamEx.update(
-        {
-            "mDepData": {
-                "images": [imgA.name],
-                "textures": [texA.name],
-                "materials": [matRF.name],
-                "node_groups": [ngLut.name],
-            }
-        }
+    xCamLut = CCameraLut()
+    xCamLut.FromArray(
+        _imgLut=aRayNorm, 
+        _iLutBorderPixel=1,
+        _iLutSuperSampling=1,
+        _fLutCenterRow=lImgCtrXY_pix[1],
+        _fLutCenterCol=lImgCtrXY_pix[0]
     )
 
-    objCam["AnyCam"] = json.dumps(
-        {
-            "sDTI": "/anycam/camera/pingen/opencv:1.2",
-            "iSenResX": iPixCntX,
-            "iSenResY": iPixCntY,
-            "fAspectX": 1.0,
-            "fAspectY": 1.0,
-            "fPixSize_um": dicSensor.get("fPixSize"),
-            "sOrigin": objCamOrig.name,
-            "lFov_deg": lFov_deg,
-            "lFovRange_deg": lFovRange_deg,
-            "mEx": dicAnyCamEx,
-        }
+    return CreateCameraLut(
+        _sName, 
+        xCamLut, 
+        bOverwrite=bOverwrite, 
+        bForce=bForce, 
+        fScale=fScale,
+        bCreateFrustum=bCreateFrustum,
+        dicAnyCamEx=dicAnyCamEx,
     )
 
-    #############################################################
-    # Place objects in hierarchical order
-    anyblend.viewlayer.Update()
-    anyblend.object.ParentObject(objCam, objRF)
-    anyblend.object.ParentObject(objCamOrig, objCam)
+#     #####################################################
+#     # Create camera empty, that acts as origin for whole camera system
 
-    return {"bResult": True, "objCam": objCamOrig, "objAnyCam": objCam}
+#     # Create the name for the camera
+#     sCamName = CreateName(_sName)
+
+#     # get or create anycam collection where all cameras are placed
+#     cnMain = bpy.data.collections.get("AnyCam")
+#     if cnMain is None:
+#         cnMain = bpy.data.collections.new("AnyCam")
+#         bpy.context.scene.collection.children.link(cnMain)
+#     # endif
+
+#     objCamOrig = bpy.data.objects.get(sCamName)
+#     if objCamOrig is not None:
+#         if bOverwrite is True:
+#             ops.DeleteObjectHierarchy(objCamOrig)
+#             objCamOrig = None
+#         else:
+#             return {
+#                 "bResult": False,
+#                 "objCam": objCamOrig,
+#                 "sMsg": "Camera with selected name already exists.",
+#             }
+#         # endif
+#     # endif
+
+#     #####################################################
+#     # Create Parameter node groups
+#     node.grp.render_pars.Create(bForce=bForce, fScale=fScale)
+#     node.grp.sensor_pars.Create(dicSensor, bForce=bForce)
+#     #####################################################
+
+#     objCamOrig = bpy.data.objects.new(sCamName, None)
+#     objCamOrig.location = (0, 0, 0)
+#     objCamOrig.empty_display_size = 1
+#     objCamOrig.empty_display_type = "PLAIN_AXES"
+#     cnMain.objects.link(objCamOrig)
+
+#     #####################################################
+#     # Create render pinhole camera
+#     sSenName = sCamName + ".Sen"
+
+#     camX = bpy.data.cameras.get(sSenName)
+#     if camX is not None:
+#         bpy.data.cameras.remove(camX)
+#         camX = None
+#     # endif
+
+#     camX = bpy.data.cameras.new(sSenName)
+#     objCam = bpy.data.objects.new(name=sSenName, object_data=camX)
+
+#     # cnMain = bpy.context.scene.collection
+#     vlMain = bpy.context.view_layer
+#     cnMain.objects.link(objCam)
+#     vlMain.objects.active = objCam
+#     objCam.select_set(True)
+
+#     # Specify camera parameters
+
+#     fPixSize_mm = 1e-3 * fPixSize_um
+#     fSenSizeX_mm = fPixSize_mm * iPixCntX
+#     fSenSizeY_mm = fPixSize_mm * iPixCntY
+#     # fSenSizeMax_mm = max(fSenSizeX_mm, fSenSizeY_mm)
+#     # fFocLen_mm = fSenSizeMax_mm
+#     fFocLen_mm = lFocLenXY_pix[0] * fPixSize_mm
+
+#     camX.type = "PERSP"
+#     camX.lens = fFocLen_mm
+#     camX.lens_unit = "MILLIMETERS"
+#     # camX.ortho_scale = fBUperMM * fSenSizeMax_mm
+#     camX.sensor_width = fSenSizeX_mm
+#     camX.sensor_height = fSenSizeY_mm
+
+#     if fSenSizeX_mm >= fSenSizeY_mm:
+#         camX.sensor_fit = "HORIZONTAL"
+#     else:
+#         camX.sensor_fit = "VERTICAL"
+#     # endif
+
+#     camX.shift_x = 0.0
+#     camX.shift_y = 0.0
+
+#     camX.clip_start = fBUperMM * 0.5 * fFocLen_mm
+#     camX.clip_end = fBUperMM * 1e7
+#     camX.display_size = max(0.5, fBUperMM * fFocLen_mm)
+
+#     # Sensor position relative to camera origin, which is
+#     # on last glass surface towards environment.
+#     objCam.location = (0, 0, fFocLen_mm * fBUperMM)
+#     objCam.rotation_euler = (0, 0, 0)
+
+#     ##############################################################
+#     # Creating LUT image object
+#     sImgName = sCamName + ".RayDir"
+#     imgA = bpy.data.images.get(sImgName)
+#     if imgA is not None:
+#         bpy.data.images.remove(imgA)
+#     # endif
+#     imgA = bpy.data.images.new(sImgName, iPixCntX, iPixCntY, alpha=True, float_buffer=True, is_data=True)
+#     sImgName = imgA.name
+#     # bpy.ops.image.new(name=sImgName, width=iImgW, height=iImgH)
+#     # imgA = bpy.data.images[sImgName]
+#     imgA.use_fake_user = True
+
+#     # add a fourth color channel to store data as Blender image
+#     aRayImg = np.c_[aRayNorm[1:iPixCntY+1, 1:iPixCntX+1, :], np.ones((iPixCntY, iPixCntX, 1))]
+
+#     # print("LUT pixel count: {}".format(aRayImg.size))
+#     # print("image pixel count: {}".format(len(imgA.pixels)))
+
+#     # Copy the actual pixels into the Blender image
+#     imgA.pixels = list(aRayImg.flatten())
+
+#     # Pack image in Blender file
+#     anyblend.ops_image.Pack(imgA)
+
+#     # Create a texture that uses the image to ensure that the image is not deleted by Blender
+#     sTexName = sCamName + ".RayDir.Tex"
+#     texA = bpy.data.textures.get(sTexName)
+#     if texA is not None:
+#         bpy.data.textures.remove(texA)
+#     # endif
+#     texA = bpy.data.textures.new(sTexName, type="IMAGE")
+#     texA.image = imgA
+#     texA.use_fake_user = True
+
+#     #####################################################
+#     # Create plane with refractor that acts as sensor plane
+#     sRefractorName = sSenName + ".RF"
+
+#     objRF = bpy.data.objects.get(sRefractorName)
+#     if objRF is not None:
+#         bpy.data.objects.remove(objRF)
+#     # endif
+
+#     meshRF = bpy.data.meshes.get(sRefractorName)
+#     if meshRF is not None:
+#         bpy.data.meshes.remove(meshRF)
+#     # endif
+
+#     meshRF = bpy.data.meshes.new(sRefractorName)
+#     objRF = bpy.data.objects.new(name=sRefractorName, object_data=meshRF)
+#     cnMain.objects.link(objRF)
+
+#     # objRF.location = (-lCenter_mm[0], -lCenter_mm[1], 0)
+#     objRF.location = (0, 0, 0)
+
+#     try:
+#         # Get Refractor Material
+#         matRF, ngLut = material.ray_lut.Create(
+#             sId=sCamName,
+#             sImgLut=imgA.name,
+#             lSenSizeXY_pix=[iPixCntX, iPixCntY],
+#             fPixSize_mm=fPixSize_mm,
+#             lCenter_mm=[0.0, 0.0],
+#             fVignettingNormRadius_mm=fVigNorm,
+#             lVignettingCoef=lVigCoef,
+#             bForce=True,
+#         )
+#     except Exception as xEx:
+#         return {
+#             "bResult": False,
+#             "objCam": objCamOrig,
+#             "sMsg": "Exception creating LUT material:\n{}".format(str(xEx)),
+#         }
+#     # endtry
+
+#     objRF.data.materials.append(matRF)
+
+#     xBMesh = bmesh.new()
+
+#     # Create Plane with Ray Splitter material
+#     fW2 = (math.ceil(fSenSizeX_mm * 10.0) / 20.0 + 0.1) * fBUperMM
+#     fH2 = (math.ceil(fSenSizeY_mm * 10.0) / 20.0 + 0.1) * fBUperMM
+#     fZ = 0.0
+
+#     # tNorm = (0, 0, 1)
+#     v1 = xBMesh.verts.new((-fW2, -fH2, fZ))
+#     v2 = xBMesh.verts.new((fW2, -fH2, fZ))
+#     v3 = xBMesh.verts.new((fW2, fH2, fZ))
+#     v4 = xBMesh.verts.new((-fW2, fH2, fZ))
+#     xBMesh.faces.new((v1, v2, v3, v4))
+
+#     xBMesh.to_mesh(meshRF)
+#     xBMesh.free()
+
+#     #############################################################
+#     # Store AnyCam Data
+#     if dicAnyCamEx is None:
+#         dicAnyCamEx = {}
+#     # endif
+
+#     dicAnyCamEx.update(
+#         {
+#             "mDepData": {
+#                 "images": [imgA.name],
+#                 "textures": [texA.name],
+#                 "materials": [matRF.name],
+#                 "node_groups": [ngLut.name],
+#             }
+#         }
+#     )
+
+#     objCam["AnyCam"] = json.dumps(
+#         {
+#             "sDTI": "/anycam/camera/pingen/opencv:1.2",
+#             "iSenResX": iPixCntX,
+#             "iSenResY": iPixCntY,
+#             "fAspectX": 1.0,
+#             "fAspectY": 1.0,
+#             "fPixSize_um": dicSensor.get("fPixSize"),
+#             "sOrigin": objCamOrig.name,
+#             "lFov_deg": lFov_deg,
+#             "lFovRange_deg": lFovRange_deg,
+#             "mEx": dicAnyCamEx,
+#         }
+#     )
+
+#     #############################################################
+#     # Place objects in hierarchical order
+#     anyblend.viewlayer.Update()
+#     anyblend.object.ParentObject(objCam, objRF)
+#     anyblend.object.ParentObject(objCamOrig, objCam)
+
+#     return {"bResult": True, "objCam": objCamOrig, "objAnyCam": objCam}
 
 
-# enddef
+# # enddef

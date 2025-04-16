@@ -29,6 +29,7 @@ Blender Camera Add-On
    :caption: Contents:
 
    special-camera-render
+   lut-camera
    technical
    license
    back-to-main

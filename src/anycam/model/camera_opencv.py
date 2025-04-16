@@ -350,7 +350,7 @@ def create_lookup(
 
     # Only flip z-axis for Blender, as y-axis is flipped implicitly,
     # when using numpy array as Blender generated image.
-    aRot_x_180 = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, -1.0]])
+    aRot_x_180 = np.array([[1.0, 0.0, 0.0], [0.0, -1.0, 0.0], [0.0, 0.0, -1.0]])
 
     # The y axis is pointing downwards. Adjust the vertical centre accordingly.
     _tImgCtrXY_opencv = [_tImgCtrXY[0], _tSensorSizeXY[1] - _tImgCtrXY[1]]

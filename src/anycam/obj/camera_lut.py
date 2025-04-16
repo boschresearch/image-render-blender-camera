@@ -36,7 +36,7 @@ import os
 import json
 import numpy as np
 from pathlib import Path
-from typing import Union
+from typing import Any, Union
 
 from .. import ops
 
@@ -73,9 +73,7 @@ def Create(
     fScale: float = 1.0,
     bCreateFrustum: bool = False,
     dicAnyCamEx: dict = None,
-):
-    # Calculate Blender Units per Millimeter
-    fBUperMM = fScale * 1e-3 / bpy.context.scene.unit_settings.scale_length
+) -> dict[str, Any]:
 
     #####################################################
     # Get camera data
@@ -118,15 +116,35 @@ def Create(
 
     # print(xCamLut._tRenderLutAngleRangeX_deg)
     # print(xCamLut._tRenderLutAngleRangeY_deg)
+    return CreateCameraLut(
+        _sName, 
+        xCamLut, 
+        bOverwrite=bOverwrite, 
+        bForce=bForce, 
+        fScale=fScale, 
+        bCreateFrustum=bCreateFrustum, 
+        dicAnyCamEx=dicAnyCamEx
+    )
 
-    #####################################################
+# ##################################################################################
+def CreateCameraLut(_sName: str, 
+                    xCamLut: CCameraLut,     
+                    bOverwrite: bool = False,
+                    bForce: bool = False,
+                    fScale: float = 1.0,
+                    bCreateFrustum: bool = False,
+                    dicAnyCamEx: dict = None,
+) -> dict[str, Any]:
     # Create camera empty, that acts as origin for whole camera system
+
+    # Calculate Blender Units per Millimeter
+    fBUperMM = fScale * 1e-3 / bpy.context.scene.unit_settings.scale_length
 
     # Create the name for the camera
     sCamName = CreateName(_sName)
 
     # get or create anycam collection where all cameras are placed
-    clnMain = bpy.data.collections.get("AnyCam")
+    clnMain = bpy.data.collections.get("AnyCam") # type: ignore
     if clnMain is None:
         clnMain = bpy.data.collections.new("AnyCam")
         bpy.context.scene.collection.children.link(clnMain)
