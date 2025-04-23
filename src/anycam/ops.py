@@ -186,14 +186,11 @@ def GetAnyCamTypeFromId(_xContext, _sCamId, bRaiseException=True):
 
 # enddef
 
-
 ############################################################################################
-def ParentAnyCam(*, sCamId, sParentId=None):
-    dicObj = bpy.data.objects
-
-    objCam = dicObj.get(sCamId)
+def GetAnyCamTopObject(sCamId: str) -> bpy.types.Object:
+    objCam = bpy.data.objects.get(sCamId)
     if objCam is None:
-        raise Exception("Child object with id '{0}' not found".format(sCamId))
+        raise RuntimeError(f"Camera object with id '{sCamId}' not found.")
     # endif
 
     dicAnyCam = LoadAnyCamData(objCam)
@@ -203,11 +200,18 @@ def ParentAnyCam(*, sCamId, sParentId=None):
         objOrig = bpy.data.objects.get(sOrigin)
         if objOrig is not None:
             objC = objOrig
-        # endif0
+        # endif
     # endif
 
+    return objC
+# enddef
+
+############################################################################################
+def ParentAnyCam(*, sCamId, sParentId=None):
+    objC = GetAnyCamTopObject(sCamId)
+
     if sParentId is not None:
-        objP = dicObj.get(sParentId)
+        objP = bpy.data.objects.get(sParentId)
         if objP is None:
             raise Exception("Parent object with id '{0}' not found".format(sParentId))
         # endif
