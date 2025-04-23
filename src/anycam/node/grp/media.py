@@ -96,13 +96,15 @@ def Update(_dicGlassCatalog):
         # Add medium node group if it does not already exist
         if xGrp is None:
             # Create node group
-            xGrp = bpy.data.node_groups.new(sName, "ShaderNodeTree")
+            xGrp: bpy.types.NodeTree = bpy.data.node_groups.new(sName, "ShaderNodeTree")
+            xGrp.use_fake_user = True
 
             # Create output node
             nutils.ProvideNodeTreeOutputSocket(xGrp, "IOR", "NodeSocketFloat")
-            nutils.ProvideNodeTreeOutputSocket(xGrp, "Wavelength", "NodeSocketFloat")
+            # Create input node
+            nutils.ProvideNodeTreeInputSocket(xGrp, "Wavelength", "NodeSocketFloat", 520)
         # endif
-
+        
         # Remove all nodes to ensure proper update
         for node in xGrp.nodes:
             xGrp.nodes.remove(node)

@@ -608,6 +608,10 @@ def AddAnyCamDb(_dicAnyCamDb: dict, *, _xContext: bpy.types.Context = None):
 def CombineMediaDbs(_dicMediaPkgs):
     dicMediaDb = {}
 
+    if _dicMediaPkgs is None or not isinstance(_dicMediaPkgs, dict) or len(_dicMediaPkgs) == 0:
+        return dicMediaDb
+    # endif
+
     for sId in _dicMediaPkgs:
         dicMediaDb.update(_dicMediaPkgs[sId]["mMedia"])
     # endfor
@@ -1386,11 +1390,17 @@ def ActivateCamera(
             if iRefractSurfCnt is not None:
                 if scMain.cycles.max_bounces < iRefractSurfCnt:
                     scMain.cycles.max_bounces = iRefractSurfCnt
-                    raise Exception("The Cycles maximal bounces are set to {0}.".format(iRefractSurfCnt))
+                    raise RuntimeError(
+                        f"ERROR: To render with camera '{objCam.name}', the Cycles maximal bounces must be set to a minimum of {iRefractSurfCnt}.\n"
+                        f"       In the cycles settings, set 'max_bounces' to {iRefractSurfCnt} or higher."
+                    )
                 # endif
                 if scMain.cycles.transmission_bounces < iRefractSurfCnt:
                     scMain.cycles.transmission_bounces = iRefractSurfCnt
-                    raise Exception("The Cycles maximal transmission bounces are set to {0}.".format(iRefractSurfCnt))
+                    raise RuntimeError(
+                        f"ERROR: To render camera '{objCam.name}', the Cycles maximal transmission bounces must be set to a minimum of {iRefractSurfCnt}.\n"
+                        f"       In the cycles settings, set 'transmission_bounces' to {iRefractSurfCnt} or higher."
+                    )
                 # endif
             # endif
         # endif

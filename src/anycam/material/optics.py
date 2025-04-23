@@ -197,7 +197,12 @@ def GetRefractMedium(_sMediumOut, _sMediumIn):
         lLinks.new(nodMedOut.outputs[0], nodMath1.inputs[1])
 
         nodRef = lNodes.new(type="ShaderNodeBsdfRefraction")
-        nodRef.distribution = "SHARP"
+        # test Blender Version
+        if bpy.app.version < (4, 0, 0):
+            nodRef.distribution = "SHARP"
+        else:
+            nodRef.distribution = "BECKMANN"
+
         nodRef.inputs["Color"].default_value = (1.0, 1.0, 1.0, 1.0)
         nalign.SetNodePosToRightOf(nodMath1, nodRef, tNodSpace)
         lLinks.new(nodMath1.outputs[0], nodRef.inputs["IOR"])

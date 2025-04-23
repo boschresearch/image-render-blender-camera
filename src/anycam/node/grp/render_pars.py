@@ -95,7 +95,7 @@ def Create(bForce=False, iWavelength=None, fScale=None):
         bUpdate = bForce
     # endif
 
-    if bUpdate == True:
+    if bUpdate is True:
         tNodeSpace = (100, 15)
 
         for nod in ngPars.nodes:
@@ -103,9 +103,7 @@ def Create(bForce=False, iWavelength=None, fScale=None):
         # endfor
 
         xOut = GetOutputs()
-        nutils.ProvideNodeTreeOutputs(ngPars, xOut)
-
-        nodOut = ngPars.nodes.new("NodeGroupOutput")
+        nodOut = nutils.ProvideNodeTreeOutputs(ngPars, xOut)
         nodOut.location = (300, 0)
 
         nodPar1 = ngPars.nodes.new("ShaderNodeValue")
