@@ -229,15 +229,18 @@ def Create(
         # A fisheye camera with polynomial distortion
         xView = CCameraViewPanoPoly()
 
-        sLutConfigFile = dicPano.get("sLutConfigFile")
+        sLutConfigFile = convert.DictElementToString(dicPano, "sLutConfigFile", sDefault=None, bDoRaise=False)
 
         if sLutConfigFile is None:
             xView.Init(
-                lPixCnt=[dicSensor.get("iPixCntX"), dicSensor.get("iPixCntY")],
-                fPixSize_um=dicSensor.get("fPixSize"),
-                fFovMax_deg=dicPano.get("fFovMax_deg"),
-                lPolyCoef_rad_mm=dicPano.get("lPolyCoef_rad_mm"),
-                lCenterOffsetXY_mm=dicPano.get("lCenterOffsetXY_mm"),
+                lPixCnt=[
+                    convert.DictElementToInt(dicPano, "iPixCntX"), 
+                    convert.DictElementToInt(dicPano, "iPixCntY")
+                ],
+                fPixSize_um=convert.DictElementToFloat(dicSensor, "fPixSize"),
+                fFovMax_deg=convert.DictElementToFloat(dicPano, "fFovMax_deg", fDefault=None, bDoRaise=False),
+                lPolyCoef_rad_mm=convert.DictElementToFloatList(dicPano, "lPolyCoef_rad_mm"),
+                lCenterOffsetXY_mm=convert.DictElementToFloatList(dicPano, "lCenterOffsetXY_mm"),
             )
 
         else:
@@ -255,6 +258,8 @@ def Create(
 
                 pathLutConfigFile = anypath.MakeNormPath((sPrjCfgPath, pathLutConfigFile))
             # endif
+
+            fMaxPolyFitResidual: float | None = convert.DictElementToFloat(dicPano, "fMaxPolyFitResidual", fDefault=0.02, bDoRaise=False)
 
             try:
                 dicLut = config.Load(pathLutConfigFile, sDTI="/anycam/db/project/lut/std:1.0", bAddPathVars=True)
@@ -287,6 +292,17 @@ def Create(
                 lLutCenterRC=[fLutCenterRow, fLutCenterCol],
                 xFilePath=pathLutFile,
             )
+
+            if fMaxPolyFitResidual is not None and xView.lPolyFitQuality[0][0] > fMaxPolyFitResidual:
+                raise CAnyError_Message(sMsg=(
+                    f"The polynomial fit of the LUT has a residual of {xView.lPolyFitQuality[0][0]:6.4f}, "
+                    f"which is above the threshold {fMaxPolyFitResidual:6.4f} for LUT: \n"
+                    f"     {pathLutFile.as_posix()}\n"
+                    "If you want to accept a higher residual threshold set the value of "
+                    "'fMaxPolyFitResidual' in the projection configuration to a higher value.\n"
+                    "IMPORTANT: A high residual value may lead to incorrect results in the rendering.\n"
+                    "           Please check rendering quality of the camera."
+                ))
         # endif
 
         tShift = xView.GetPrinciplePointShift()

@@ -34,7 +34,8 @@ sPath = sys.argv[1]
 print(sPath)
 
 xCamPoly = CCameraPanoPoly()
-xCamPoly.FromLut(_lPixCntXY=[100, 100], _fPixSize_um=3.0, _xFilePath=sPath, _iLutBorderPixel=0, _iLutSuperSampling=1)
+xCamPoly.FromLut(_lPixCntXY=[1280, 992], _fPixSize_um=3.0, _xFilePath=sPath, _iLutBorderPixel=0, _iLutSuperSampling=1)
+print(xCamPoly._lPolyFitQuality)
 
 aLut = xCamPoly.GenLutRayDirs(_iPixCntX=10)
 
