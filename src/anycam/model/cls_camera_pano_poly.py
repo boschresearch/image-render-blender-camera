@@ -315,10 +315,10 @@ class CCameraPanoPoly:
 
         self._lPolyFitQuality = [lQuality[0].tolist(), int(lQuality[1]), lQuality[2].tolist(), float(lQuality[3])]
 
-        if _fFovMax_deg is not None:
-            fFovMax_deg = min(_fFovMax_deg, 2.0 * xCamLut.fRadAngleMax_deg)
-        else:
+        if _fFovMax_deg is None:
             fFovMax_deg = 2.0 * xCamLut.fRadAngleMax_deg
+        else:
+            fFovMax_deg = _fFovMax_deg
         # endif
 
         self._EvalAngleRanges(fFovMax_deg)
